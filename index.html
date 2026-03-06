@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>OVK App</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+padding:20px;
+background:#f2f2f2;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+background:white;
+}
+
+td,th{
+border:1px solid #ccc;
+padding:6px;
+}
+
+input{
+width:100%;
+border:none;
+}
+
+button{
+padding:12px;
+margin-top:10px;
+font-size:16px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>OVK Fältprotokoll</h2>
+
+<label>Projektnamn</label>
+<input id="project" placeholder="BRF Solrosen">
+
+<br><br>
+
+<table id="ovkTable">
+<thead>
+<tr>
+<th>Lgh</th>
+<th>Kök</th>
+<th>Bad</th>
+<th>WC</th>
+<th>Rum</th>
+<th>Sov1</th>
+<th>Sov2</th>
+<th>Notering</th>
+</tr>
+</thead>
+
+<tbody>
+</tbody>
+</table>
+
+<button onclick="exportPDF()">Exportera PDF</button>
+
+<script>
+
+const rows=32
+const table=document.querySelector("#ovkTable tbody")
+
+for(let i=1;i<=rows;i++){
+
+let row=document.createElement("tr")
+
+row.innerHTML=`
+<td>${i}</td>
+<td><input></td>
+<td><input></td>
+<td><input></td>
+<td><input></td>
+<td><input></td>
+<td><input></td>
+<td><input></td>
+`
+
+table.appendChild(row)
+
+}
+
+function exportPDF(){
+
+const {jsPDF}=window.jspdf
+const doc=new jsPDF("landscape")
+
+let project=document.getElementById("project").value || "OVK"
+
+doc.text("OVK Protokoll - "+project,10,10)
+
+let data=[]
+
+document.querySelectorAll("#ovkTable tbody tr").forEach(r=>{
+
+let row=[]
+
+r.querySelectorAll("td").forEach((c,i)=>{
+
+if(i===0)
+row.push(c.innerText)
+
+else
+row.push(c.querySelector("input").value)
+
+})
+
+data.push(row)
+
+})
+
+doc.autoTable({
+head:[["Lgh","Kök","Bad","WC","Rum","Sov1","Sov2","Notering"]],
+body:data,
+startY:20
+})
+
+doc.save(project+".pdf")
+
+}
+
+</script>
+
+</body>
+</html>
