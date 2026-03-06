@@ -1,359 +1,384 @@
-import React, { useMemo, useState } from "react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OVK Luftflödesprotokoll</title>
 
-/* ---------------- BRAND COLORS ---------------- */
-const ORANGE = "#F28C28";        // main orange
-const LIGHT_ORANGE = "#FFD199";  // soft orange
-const SOFT_BG = "#FFF6ED";       // very light background
-const TEXT = "#1f2933";
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
-/* ---------------- TABLE STRUCTURE ---------------- */
-const ROOM_COLUMNS = ["Kök", "Bad", "WC", "Vardagsrum", "Sov 1", "Sov 2"];
+  <style>
+    :root{
+      --orange:#F28C28;
+      --light-orange:#FFD199;
+      --soft-bg:#FFF6ED;
+      --text:#1f2933;
+      --white:#ffffff;
+      --line:#ead8c5;
+    }
 
-const makeApartmentLabel = (n) => {
-  const floor = 11 + Math.floor((n - 1) / 3);
-  const door = ((n - 1) % 3) + 1;
-  return `${floor}0${door}`;
-};
+    *{ box-sizing:border-box; }
 
-const makeRow = (n) => ({
-  id: crypto.randomUUID(),
-  apartment: makeApartmentLabel(n),
-  values: ROOM_COLUMNS.reduce((acc, col) => {
-    acc[col] = "";
-    return acc;
-  }, {}),
-  note: "",
-});
+    body{
+      margin:0;
+      padding:20px;
+      font-family:Arial, sans-serif;
+      background:var(--soft-bg);
+      color:var(--text);
+    }
 
-const initialRows = Array.from({ length: 32 }, (_, i) => makeRow(i + 1));
+    .container{
+      max-width:1800px;
+      margin:0 auto;
+    }
 
-/* ---------------- HELPERS ---------------- */
-function sanitizeFileName(name) {
-  return (name || "OVK-projekt")
-    .replace(/[\\/:*?"<>|]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+    .title-input{
+      width:100%;
+      text-align:center;
+      font-size:28px;
+      font-weight:700;
+      padding:16px;
+      border-radius:14px;
+      border:2px solid var(--light-orange);
+      background:var(--white);
+      margin-bottom:20px;
+    }
 
-/* ---------------- APP ---------------- */
-export default function OvkSimpleApp() {
+    .stats{
+      display:flex;
+      gap:20px;
+      flex-wrap:wrap;
+      margin-bottom:20px;
+    }
 
-  const [projectTitle, setProjectTitle] = useState(
-    "Luftflödesprotokoll Brf Doktorn, Smidesvägen 17 Södertälje"
-  );
+    .stat{
+      background:var(--white);
+      padding:16px;
+      border-radius:12px;
+      border:2px solid var(--light-orange);
+      min-width:180px;
+    }
 
-  const [projectName, setProjectName] = useState("BRF Doktorn");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [performedBy, setPerformedBy] = useState("");
-  const [method, setMethod] = useState("");
+    .stat-label{
+      font-size:13px;
+      color:#666;
+      margin-bottom:6px;
+    }
 
-  const [rows, setRows] = useState(initialRows);
+    .stat-value{
+      font-size:26px;
+      font-weight:700;
+    }
 
-  const filledCells = useMemo(() => {
-    return rows.reduce(
-      (acc, row) => acc + Object.values(row.values).filter(Boolean).length,
-      0
-    );
-  }, [rows]);
+    .table-wrap{
+      background:var(--white);
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.05);
+      overflow:auto;
+    }
 
-  const updateCell = (rowId, col, value) => {
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId ? { ...row, values: { ...row.values, [col]: value } } : row
-      )
-    );
-  };
+    table{
+      width:100%;
+      min-width:1200px;
+      border-collapse:collapse;
+    }
 
-  const updateRowField = (rowId, field, value) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
-    );
-  };
+    thead th{
+      background:var(--orange);
+      color:var(--white);
+      padding:12px;
+      font-weight:700;
+      position:sticky;
+      top:0;
+      z-index:2;
+      border:1px solid var(--orange);
+      white-space:nowrap;
+    }
 
-  /* ---------------- PDF EXPORT ---------------- */
-  const exportPDF = () => {
-    const doc = new jsPDF("landscape");
+    td{
+      border:1px solid #eee;
+      padding:8px;
+      background:#fff;
+    }
 
-    doc.setFillColor(242, 140, 40);
-    doc.rect(8, 8, 281, 14, "F");
+    td.apartment-cell{
+      background:#FFF6ED;
+      font-weight:700;
+      min-width:120px;
+    }
 
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(14);
-    doc.text(projectTitle,148,17,{align:"center"});
+    td.note-cell{
+      min-width:220px;
+    }
 
-    doc.setTextColor(20);
+    input.cell-input{
+      width:100%;
+      border:1px solid #ddd;
+      border-radius:6px;
+      padding:8px;
+      font-size:14px;
+      background:#fff;
+    }
 
-    const head=[["Lägenhet",...ROOM_COLUMNS,"Notering"]];
+    .buttons{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:20px;
+    }
 
-    const body=rows.map(r=>[
-      r.apartment,
-      ...ROOM_COLUMNS.map(c=>r.values[c]||""),
-      r.note
-    ])
+    button{
+      padding:12px 18px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:15px;
+    }
 
-    autoTable(doc,{ 
-      startY:28,
-      head,
-      body,
-      headStyles:{fillColor:[242,140,40]},
-      alternateRowStyles:{fillColor:[255,244,230]}
-    })
+    .btn{
+      border:2px solid var(--light-orange);
+      background:#fff;
+      color:var(--text);
+      font-weight:600;
+    }
 
-    doc.text("Datum:",20,190)
-    doc.text(date,20,197)
+    .btn-primary{
+      border:none;
+      background:var(--orange);
+      color:#fff;
+      font-weight:700;
+    }
 
-    doc.text("Mätmetod / kal.nr:",120,190)
-    doc.text(method,120,197)
+    .footer-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+      gap:20px;
+      margin-top:30px;
+    }
 
-    doc.text("Utfört av:",220,190)
-    doc.text(performedBy,220,197)
+    .footer-box{
+      background:var(--white);
+      padding:20px;
+      border-radius:16px;
+      border:2px solid var(--light-orange);
+    }
 
-    doc.save(`${sanitizeFileName(projectName)}.pdf`)
-  }
+    .footer-box label{
+      display:block;
+      font-weight:700;
+      margin-bottom:10px;
+      color:var(--orange);
+    }
 
-  /* ---------------- UI ---------------- */
+    .footer-box input{
+      width:100%;
+      border:1px solid #ddd;
+      border-radius:6px;
+      padding:10px;
+      font-size:14px;
+    }
 
-  return (
-    <div style={{
-      minHeight:"100vh",
-      background:SOFT_BG,
-      padding:20,
-      fontFamily:"Arial",
-      color:TEXT
-    }}>
+    @media (max-width:700px){
+      body{ padding:12px; }
+      .title-input{ font-size:22px; }
+      .stat{ min-width:140px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
 
-      <div style={{maxWidth:1800,margin:"auto"}}>
+    <input
+      id="projectTitle"
+      class="title-input"
+      value="Luftflödesprotokoll Brf Doktorn, Smidesvägen 17 Södertälje"
+    />
 
-        {/* TITLE */}
-        <input
-          value={projectTitle}
-          onChange={e=>setProjectTitle(e.target.value)}
-          style={{
-            width:"100%",
-            textAlign:"center",
-            fontSize:28,
-            fontWeight:700,
-            padding:16,
-            borderRadius:14,
-            border:`2px solid ${LIGHT_ORANGE}`,
-            marginBottom:20,
-            background:"white"
-          }}
-        />
-
-        {/* STATS */}
-
-        <div style={{display:"flex",gap:20,marginBottom:20}}>
-          <Stat label="Rader" value={rows.length}/>
-          <Stat label="Kolumner" value={ROOM_COLUMNS.length}/>
-          <Stat label="Ifyllda celler" value={filledCells}/>
-        </div>
-
-        {/* TABLE */}
-
-        <div style={{
-          background:"white",
-          borderRadius:16,
-          boxShadow:"0 10px 30px rgba(0,0,0,0.05)",
-          overflow:"auto"
-        }}>
-
-          <table style={{
-            width:"100%",
-            borderCollapse:"collapse",
-            minWidth:1200
-          }}>
-
-            <thead>
-              <tr>
-                <Header>Lägenhet</Header>
-                {ROOM_COLUMNS.map(c=><Header key={c}>{c}</Header>)}
-                <Header>Notering</Header>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {rows.map(row=>(
-
-                <tr key={row.id}>
-
-                  <td style={aptCell}>
-                    <input
-                      value={row.apartment}
-                      onChange={e=>updateRowField(row.id,"apartment",e.target.value)}
-                      style={input}
-                    />
-                  </td>
-
-                  {ROOM_COLUMNS.map(col=>(
-
-                    <td style={cell} key={col}>
-                      <input
-                        value={row.values[col]}
-                        onChange={e=>updateCell(row.id,col,e.target.value)}
-                        style={input}
-                      />
-                    </td>
-
-                  ))}
-
-                  <td style={cell}>
-                    <input
-                      value={row.note}
-                      onChange={e=>updateRowField(row.id,"note",e.target.value)}
-                      style={input}
-                    />
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-        {/* BUTTONS */}
-
-        <div style={{display:"flex",gap:12,marginTop:20}}>
-
-          <button style={btn}
-            onClick={()=>setRows(p=>[...p,makeRow(p.length+1)])}
-          >
-            Lägg till rad
-          </button>
-
-          <button style={btn}
-            onClick={()=>setRows(p=>p.slice(0,-1))}
-          >
-            Ta bort rad
-          </button>
-
-          <button style={btnPrimary} onClick={exportPDF}>
-            Exportera PDF
-          </button>
-
-        </div>
-
-        {/* FOOTER BOXES */}
-
-        <div style={{
-          display:"grid",
-          gridTemplateColumns:"1fr 1fr 1fr",
-          gap:20,
-          marginTop:30
-        }}>
-
-          <FooterBox label="Datum">
-            <input type="date" value={date} onChange={e=>setDate(e.target.value)} style={input}/>
-          </FooterBox>
-
-          <FooterBox label="Mätmetod / kalibreringsnummer">
-            <input value={method} onChange={e=>setMethod(e.target.value)} style={input}/>
-          </FooterBox>
-
-          <FooterBox label="Utfört av">
-            <input value={performedBy} onChange={e=>setPerformedBy(e.target.value)} style={input}/>
-          </FooterBox>
-
-        </div>
-
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Rader</div>
+        <div class="stat-value" id="statRows">32</div>
       </div>
-
+      <div class="stat">
+        <div class="stat-label">Kolumner</div>
+        <div class="stat-value" id="statCols">6</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Ifyllda celler</div>
+        <div class="stat-value" id="statFilled">0</div>
+      </div>
     </div>
-  )
-}
 
-/* ---------------- COMPONENTS ---------------- */
-
-function Header({children}){
-  return(
-    <th style={{
-      background:"#F28C28",
-      color:"white",
-      padding:12,
-      fontWeight:700,
-      position:"sticky",
-      top:0
-    }}>
-      {children}
-    </th>
-  )
-}
-
-function Stat({label,value}){
-  return(
-    <div style={{
-      background:"white",
-      padding:16,
-      borderRadius:12,
-      border:`2px solid ${LIGHT_ORANGE}`
-    }}>
-      <div style={{fontSize:13,color:"#666"}}>{label}</div>
-      <div style={{fontSize:26,fontWeight:700}}>{value}</div>
+    <div class="table-wrap">
+      <table id="ovkTable">
+        <thead>
+          <tr>
+            <th>Lägenhet</th>
+            <th>Kök</th>
+            <th>Bad</th>
+            <th>WC</th>
+            <th>Vardagsrum</th>
+            <th>Sov 1</th>
+            <th>Sov 2</th>
+            <th>Notering</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-  )
-}
 
-function FooterBox({label,children}){
-  return(
-    <div style={{
-      background:"white",
-      padding:20,
-      borderRadius:16,
-      border:`2px solid ${LIGHT_ORANGE}`
-    }}>
-      <div style={{
-        fontWeight:700,
-        marginBottom:10,
-        color:ORANGE
-      }}>{label}</div>
-      {children}
+    <div class="buttons">
+      <button class="btn" onclick="addRow()">Lägg till rad</button>
+      <button class="btn" onclick="removeRow()">Ta bort rad</button>
+      <button class="btn-primary" onclick="exportPDF()">Exportera PDF</button>
     </div>
-  )
-}
 
-/* ---------------- STYLES ---------------- */
+    <div class="footer-grid">
+      <div class="footer-box">
+        <label for="dateField">Datum</label>
+        <input type="date" id="dateField" />
+      </div>
+      <div class="footer-box">
+        <label for="methodField">Mätmetod / kalibreringsnummer</label>
+        <input type="text" id="methodField" placeholder="Ange metod och kal.nr" />
+      </div>
+      <div class="footer-box">
+        <label for="performedByField">Utfört av</label>
+        <input type="text" id="performedByField" placeholder="Namn" />
+      </div>
+    </div>
 
-const cell={
-  border:"1px solid #eee",
-  padding:8
-}
+  </div>
 
-const aptCell={
-  border:"1px solid #eee",
-  padding:8,
-  background:"#FFF6ED",
-  fontWeight:700
-}
+  <script>
+    const roomColumns = ["Kök", "Bad", "WC", "Vardagsrum", "Sov 1", "Sov 2"];
+    const tbody = document.querySelector("#ovkTable tbody");
 
-const input={
-  width:"100%",
-  border:"1px solid #ddd",
-  borderRadius:6,
-  padding:8
-}
+    function makeApartmentLabel(n){
+      const floor = 11 + Math.floor((n - 1) / 3);
+      const door = ((n - 1) % 3) + 1;
+      return `${floor}0${door}`;
+    }
 
-const btn={
-  padding:"12px 18px",
-  borderRadius:10,
-  border:`2px solid ${LIGHT_ORANGE}`,
-  background:"white",
-  cursor:"pointer"
-}
+    function createRow(apartmentLabel){
+      const tr = document.createElement("tr");
 
-const btnPrimary={
-  padding:"12px 18px",
-  borderRadius:10,
-  border:"none",
-  background:ORANGE,
-  color:"white",
-  fontWeight:700,
-  cursor:"pointer"
-}
+      let html = `
+        <td class="apartment-cell"><input class="cell-input" value="${apartmentLabel}"></td>
+      `;
 
+      for(let i = 0; i < roomColumns.length; i++){
+        html += `<td><input class="cell-input"></td>`;
+      }
+
+      html += `<td class="note-cell"><input class="cell-input"></td>`;
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+    }
+
+    function buildInitialRows(){
+      tbody.innerHTML = "";
+      for(let i = 1; i <= 32; i++){
+        createRow(makeApartmentLabel(i));
+      }
+      updateStats();
+      attachInputListeners();
+    }
+
+    function addRow(){
+      createRow(makeApartmentLabel(tbody.querySelectorAll("tr").length + 1));
+      updateStats();
+      attachInputListeners();
+    }
+
+    function removeRow(){
+      const rows = tbody.querySelectorAll("tr");
+      if(rows.length > 1){
+        rows[rows.length - 1].remove();
+        updateStats();
+      }
+    }
+
+    function updateStats(){
+      document.getElementById("statRows").textContent = tbody.querySelectorAll("tr").length;
+      document.getElementById("statCols").textContent = roomColumns.length;
+      updateFilledCount();
+    }
+
+    function updateFilledCount(){
+      const inputs = tbody.querySelectorAll("input");
+      let filled = 0;
+      inputs.forEach(input => {
+        if(input.value.trim() !== "") filled++;
+      });
+      document.getElementById("statFilled").textContent = filled;
+    }
+
+    function attachInputListeners(){
+      tbody.querySelectorAll("input").forEach(input => {
+        input.oninput = updateFilledCount;
+      });
+    }
+
+    function sanitizeFileName(name){
+      return (name || "OVK-projekt")
+        .replace(/[\\\\/:*?\"<>|]/g, "-")
+        .replace(/\\s+/g, " ")
+        .trim();
+    }
+
+    function exportPDF(){
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF("landscape");
+
+      const projectTitle = document.getElementById("projectTitle").value || "Luftflödesprotokoll";
+      const date = document.getElementById("dateField").value || "";
+      const method = document.getElementById("methodField").value || "";
+      const performedBy = document.getElementById("performedByField").value || "";
+
+      doc.setFillColor(242, 140, 40);
+      doc.rect(8, 8, 281, 14, "F");
+
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(14);
+      doc.text(projectTitle, 148, 17, { align: "center" });
+
+      doc.setTextColor(20);
+
+      const body = [];
+      tbody.querySelectorAll("tr").forEach(tr => {
+        const row = [];
+        tr.querySelectorAll("input").forEach(input => {
+          row.push(input.value || "");
+        });
+        body.push(row);
+      });
+
+      doc.autoTable({
+        startY: 28,
+        head: [["Lägenhet", ...roomColumns, "Notering"]],
+        body: body,
+        headStyles: { fillColor: [242, 140, 40] },
+        alternateRowStyles: { fillColor: [255, 244, 230] },
+        styles: { fontSize: 8 }
+      });
+
+      doc.setFontSize(10);
+      doc.text("Datum:", 20, 190);
+      doc.text(date, 20, 197);
+
+      doc.text("Mätmetod / kal.nr:", 120, 190);
+      doc.text(method, 120, 197);
+
+      doc.text("Utfört av:", 220, 190);
+      doc.text(performedBy, 220, 197);
+
+      doc.save(`${sanitizeFileName(projectTitle)}.pdf`);
+    }
+
+    document.getElementById("dateField").value = new Date().toISOString().slice(0,10);
+
+    buildInitialRows();
+  </script>
+</body>
+</html>
