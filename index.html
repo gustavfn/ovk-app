@@ -10,16 +10,17 @@
 
   <style>
     :root{
-      --orange:#F28C28;
-      --light-orange:#FFD199;
-      --bg:#f5f2ed;
+      --orange:#E0AC00;
+      --light-orange:#E3C04C;
+      --soft-orange:#FFF7DF;
+      --bg:#f6f1ea;
       --panel:#ffffff;
       --line:#b8b0a6;
       --line-soft:#d8d1c8;
       --text:#20262c;
       --dark:#2f2f2f;
-      --sub:#ece7df;
-      --row-alt:#faf8f5;
+      --sub:#f1ebe3;
+      --row-alt:#fcfaf7;
       --yellow:#d8a100;
       --red:#c62828;
     }
@@ -29,7 +30,7 @@
     body{
       margin:0;
       font-family:Arial, Helvetica, sans-serif;
-      background:var(--bg);
+      background:linear-gradient(180deg, #fbf7f1 0%, #f3ede5 100%);
       color:var(--text);
       padding:16px;
     }
@@ -39,11 +40,47 @@
       margin:0 auto;
     }
 
+    .brandbar{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      background:#fff;
+      border:1px solid var(--line);
+      padding:14px 16px;
+      margin-bottom:14px;
+      box-shadow:0 4px 18px rgba(0,0,0,.04);
+    }
+
+    .brandmark{
+      height:72px;
+      width:auto;
+      display:block;
+      object-fit:contain;
+      flex:0 0 auto;
+    }
+
+    .brandtext{
+      line-height:1.2;
+    }
+
+    .brandtitle{
+      font-size:18px;
+      font-weight:700;
+      color:#222;
+    }
+
+    .brandsubtitle{
+      font-size:12px;
+      color:#666;
+      margin-top:4px;
+    }
+
     .panel{
       background:var(--panel);
       border:1px solid var(--line);
       padding:16px;
       margin-bottom:14px;
+      box-shadow:0 4px 18px rgba(0,0,0,.04);
     }
 
     .hidden{ display:none !important; }
@@ -56,7 +93,6 @@
     .grid{ display:grid; gap:12px; }
     .grid-2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
     .grid-3{ grid-template-columns:repeat(3,minmax(0,1fr)); }
-    .grid-4{ grid-template-columns:repeat(4,minmax(0,1fr)); }
 
     label{
       display:block;
@@ -65,9 +101,10 @@
       text-transform:uppercase;
       letter-spacing:.4px;
       margin-bottom:6px;
+      color:#333;
     }
 
-    input, select, textarea{
+    input, textarea{
       width:100%;
       border:1px solid var(--line);
       padding:10px 10px;
@@ -78,12 +115,13 @@
       font-family:inherit;
     }
 
-    input:focus, select:focus, textarea:focus{
-      background:#fff8f0;
+    input:focus, textarea:focus{
+      background:#fff9f2;
+      border-color:var(--orange);
     }
 
     textarea{
-      min-height:140px;
+      min-height:150px;
       resize:vertical;
     }
 
@@ -92,8 +130,9 @@
       font-weight:700;
       text-align:center;
       padding:12px;
-      border:1px solid var(--line);
+      border:1px solid var(--orange);
       width:100%;
+      background:linear-gradient(180deg,#fffdfa 0%, #fff6eb 100%);
     }
 
     .system-buttons{
@@ -112,10 +151,15 @@
       font-size:14px;
     }
 
+    .sys-btn:hover{
+      background:#fff6eb;
+      border-color:var(--orange);
+    }
+
     .sys-btn.active{
-      background:var(--orange);
+      background:linear-gradient(180deg, var(--light-orange) 0%, var(--orange) 100%);
       color:#fff;
-      border-color:#995d1b;
+      border-color:#a77b00;
     }
 
     .executor-row{
@@ -132,24 +176,27 @@
       font-size:14px;
     }
 
-    .small-btn{
-      padding:10px 12px;
-      border:1px solid var(--line);
-      background:#fff;
-    }
-
-    .btn{
-      padding:11px 16px;
+    .small-btn, .btn{
+      padding:11px 14px;
       border:1px solid var(--line);
       background:#fff;
       color:#111;
     }
 
+    .small-btn:hover, .btn:hover{
+      background:#fff6eb;
+      border-color:var(--orange);
+    }
+
     .btn-primary{
       padding:11px 16px;
-      border:1px solid #995d1b;
-      background:var(--orange);
+      border:1px solid #a77b00;
+      background:linear-gradient(180deg, var(--light-orange) 0%, var(--orange) 100%);
       color:#fff;
+    }
+
+    .btn-primary:hover{
+      filter:brightness(.97);
     }
 
     .btn-danger{
@@ -164,10 +211,6 @@
       flex-wrap:wrap;
       gap:10px;
       margin-top:12px;
-    }
-
-    .title-bar{
-      margin-bottom:12px;
     }
 
     .table-wrap{
@@ -192,7 +235,7 @@
     }
 
     thead tr.main-head th{
-      background:var(--dark);
+      background:#2d2d2d;
       color:#fff;
       position:sticky;
       top:0;
@@ -219,7 +262,7 @@
     }
 
     .apt-cell{
-      background:#f1ede7 !important;
+      background:#f8efe3 !important;
       font-weight:700;
     }
 
@@ -252,11 +295,7 @@
     }
 
     .note-btn.empty{
-      color:#555;
-    }
-
-    .note-btn.has-note{
-      color:#111;
+      color:#666;
     }
 
     .note-btn.level-1{
@@ -339,6 +378,7 @@
       background:#fff;
       border:1px solid var(--line);
       padding:16px;
+      box-shadow:0 12px 32px rgba(0,0,0,.15);
     }
 
     .note-levels{
@@ -381,7 +421,7 @@
     }
 
     .quick-btn{
-      border:none;
+      border:1px solid transparent;
       background:transparent;
       min-height:34px;
       font-size:12px;
@@ -391,26 +431,45 @@
 
     .quick-btn:hover{
       background:#fff3e6;
+      border-color:#ffd7ad;
     }
 
     .quick-btn.active{
-      background:#f28c28;
+      background:var(--orange);
       color:#fff;
+      border-color:#a77b00;
     }
 
     @media (max-width:1100px){
-      .grid-4, .grid-3, .grid-2, .system-buttons, .footer-grid, .note-levels{
+      .grid-3, .grid-2, .system-buttons, .footer-grid, .note-levels{
         grid-template-columns:1fr;
       }
 
       .project-item{
         grid-template-columns:1fr;
       }
+
+      .brandbar{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .brandmark{
+        height:54px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="app">
+
+    <div class="brandbar">
+      <img src="logo.png" alt="Mäter i Sverige AB logga" class="brandmark" />
+      <div class="brandtext">
+        <div class="brandtitle">Mäter i Sverige AB</div>
+        <div class="brandsubtitle">OVK • Luftflöden • Lägenhetsprotokoll</div>
+      </div>
+    </div>
 
     <div id="startScreen">
       <div class="panel">
@@ -464,7 +523,7 @@
     </div>
 
     <div id="workScreen" class="hidden">
-      <div class="panel title-bar">
+      <div class="panel">
         <input id="projectTitle" class="title-input">
         <div class="muted" style="margin-top:8px;">
           System: <strong id="systemLabel"></strong> |
@@ -539,8 +598,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_projects_v2";
-    const APP_STATE_KEY = "ovk_app_current_project_id";
+    const STORAGE_KEY = "ovk_app_projects_v4";
+    const APP_STATE_KEY = "ovk_app_current_project_id_v4";
 
     const templates = {
       "självdrag": {
@@ -592,6 +651,7 @@
     let autosaveTimer = null;
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
+    let cachedLogoDataUrl = null;
 
     function clone(obj){
       return JSON.parse(JSON.stringify(obj));
@@ -599,6 +659,14 @@
 
     function uid(){
       return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
     }
 
     function getProjects(){
@@ -619,6 +687,13 @@
 
     function getCurrentProjectId(){
       return localStorage.getItem(APP_STATE_KEY) || "";
+    }
+
+    function formatDateTime(iso){
+      if(!iso) return "-";
+      const d = new Date(iso);
+      if (isNaN(d)) return "-";
+      return d.toLocaleString("sv-SE");
     }
 
     function setStatus(text){
@@ -648,6 +723,89 @@
       selectedSystem = system;
       document.querySelectorAll(".sys-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
+    }
+
+    function buildEmptyValueArray(template){
+      const arr = [];
+      template.groups.forEach(group => {
+        for(let i=1; i<=group.count; i++){
+          if(group.type === "double"){
+            arr.push({ mode:"double", proj:"", uppm:"" });
+          } else if(group.type === "quick"){
+            arr.push({ mode:"quick", value:"" });
+          } else {
+            arr.push({ mode:"single", value:"" });
+          }
+        }
+      });
+      return arr;
+    }
+
+    function makeApartmentLabel(n){
+      const floor = 11 + Math.floor((n - 1) / 3);
+      const door = ((n - 1) % 3) + 1;
+      return `${floor}0${door}`;
+    }
+
+    function buildInitialRows(template, count){
+      const rows = [];
+      for(let i=1; i<=count; i++){
+        rows.push({
+          apartment: makeApartmentLabel(i),
+          values: buildEmptyValueArray(template),
+          note: { level: 0, text: "" }
+        });
+      }
+      return rows;
+    }
+
+    function renderSavedProjects(){
+      const list = document.getElementById("savedProjectsList");
+      const q = (document.getElementById("projectSearch").value || "").toLowerCase().trim();
+      const projects = getProjects()
+        .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
+        .filter(p => {
+          const hay = `${p.projectName} ${p.documentTitle} ${p.system}`.toLowerCase();
+          return !q || hay.includes(q);
+        });
+
+      if(!projects.length){
+        list.innerHTML = `<div style="padding:12px;">Inga sparade projekt.</div>`;
+        return;
+      }
+
+      list.innerHTML = projects.map(p => `
+        <div class="project-item">
+          <div>
+            <div class="project-name">${escapeHtml(p.projectName)}</div>
+            <div class="project-meta">${escapeHtml(p.documentTitle)} · ${escapeHtml(p.system)} · Senast ändrad ${formatDateTime(p.updatedAt)}</div>
+          </div>
+          <button class="btn" onclick="loadProject('${p.id}')">Öppna</button>
+          <button class="btn-danger" onclick="deleteProject('${p.id}')">Ta bort</button>
+        </div>
+      `).join("");
+    }
+
+    function saveCurrentProject(){
+      if(!currentProject) return;
+      currentProject.updatedAt = new Date().toISOString();
+      const projects = getProjects();
+      const idx = projects.findIndex(p => p.id === currentProject.id);
+      if(idx >= 0) projects[idx] = currentProject;
+      else projects.push(currentProject);
+      setProjects(projects);
+      setCurrentProjectId(currentProject.id);
+      renderSavedProjects();
+    }
+
+    function autosave(){
+      if(!currentProject) return;
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        collectUiIntoProject();
+        saveCurrentProject();
+        setStatus("Autosparat.");
+      }, 250);
     }
 
     function createNewProject(){
@@ -685,151 +843,6 @@
 
       saveCurrentProject();
       openCurrentProject();
-    }
-
-    function buildInitialRows(template, count){
-      const rows = [];
-      for(let i=1; i<=count; i++){
-        rows.push({
-          apartment: makeApartmentLabel(i),
-          values: buildEmptyValueArray(template),
-          note: { level: 0, text: "" }
-        });
-      }
-      return rows;
-    }
-
-    function buildEmptyValueArray(template){
-      const arr = [];
-      template.groups.forEach(group => {
-        for(let i=1; i<=group.count; i++){
-          if(group.type === "double"){
-            arr.push({ mode:"double", proj:"", uppm:"" });
-          } else if(group.type === "quick"){
-            arr.push({ mode:"quick", value:"" });
-          } else {
-            arr.push({ mode:"single", value:"" });
-          }
-        }
-      });
-      return arr;
-    }
-
-    function makeApartmentLabel(n){
-      const floor = 11 + Math.floor((n - 1) / 3);
-      const door = ((n - 1) % 3) + 1;
-      return `${floor}0${door}`;
-    }
-
-    function escapeHtml(str){
-      return String(str || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    function formatDateTime(iso){
-      if(!iso) return "-";
-      const d = new Date(iso);
-      if (isNaN(d)) return "-";
-      return d.toLocaleString("sv-SE");
-    }
-
-    function renderSavedProjects(){
-      const list = document.getElementById("savedProjectsList");
-      const q = (document.getElementById("projectSearch").value || "").toLowerCase().trim();
-      const projects = getProjects()
-        .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
-        .filter(p => {
-          const hay = `${p.projectName} ${p.documentTitle} ${p.system}`.toLowerCase();
-          return !q || hay.includes(q);
-        });
-
-      if(!projects.length){
-        list.innerHTML = `<div style="padding:12px;">Inga sparade projekt.</div>`;
-        return;
-      }
-
-      list.innerHTML = projects.map(p => `
-        <div class="project-item">
-          <div>
-            <div class="project-name">${escapeHtml(p.projectName)}</div>
-            <div class="project-meta">
-              ${escapeHtml(p.documentTitle)} · ${escapeHtml(p.system)} · Senast ändrad ${formatDateTime(p.updatedAt)}
-            </div>
-          </div>
-          <button class="btn" onclick="loadProject('${p.id}')">Öppna</button>
-          <button class="btn-danger" onclick="deleteProject('${p.id}')">Ta bort</button>
-        </div>
-      `).join("");
-    }
-
-    function saveCurrentProject(){
-      if(!currentProject) return;
-      currentProject.updatedAt = new Date().toISOString();
-      const projects = getProjects();
-      const idx = projects.findIndex(p => p.id === currentProject.id);
-      if(idx >= 0) projects[idx] = currentProject;
-      else projects.push(currentProject);
-      setProjects(projects);
-      setCurrentProjectId(currentProject.id);
-      renderSavedProjects();
-    }
-
-    function autosave(){
-      if(!currentProject) return;
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(() => {
-        collectUiIntoProject();
-        saveCurrentProject();
-        setStatus("Autosparat.");
-      }, 250);
-    }
-
-    function collectUiIntoProject(){
-      if(!currentProject) return;
-
-      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
-      currentProject.date = document.getElementById("dateField").value;
-      currentProject.method = document.getElementById("methodField").value.trim();
-      currentProject.performedBy = document.getElementById("performedByField").value.trim();
-
-      const rows = [];
-      document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
-        const apartment = tr.querySelector(".js-apartment").value.trim();
-        const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
-
-        const values = [];
-        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
-          const mode = entry.dataset.mode;
-          if(mode === "double"){
-            values.push({
-              mode: "double",
-              proj: entry.querySelector(".js-proj").value.trim(),
-              uppm: entry.querySelector(".js-uppm").value.trim()
-            });
-          } else if(mode === "quick"){
-            values.push({
-              mode: "quick",
-              value: entry.dataset.quickValue || ""
-            });
-          } else {
-            values.push({
-              mode: "single",
-              value: entry.querySelector(".js-single").value.trim()
-            });
-          }
-        });
-
-        rows.push({
-          apartment,
-          values,
-          note: noteData
-        });
-      });
-
-      currentProject.rows = rows;
     }
 
     function loadProject(id){
@@ -881,24 +894,68 @@
       setStatus("Tillbaka till startsidan. Projektet är sparat.");
     }
 
+    function collectUiIntoProject(){
+      if(!currentProject) return;
+
+      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
+      currentProject.date = document.getElementById("dateField").value;
+      currentProject.method = document.getElementById("methodField").value.trim();
+      currentProject.performedBy = document.getElementById("performedByField").value.trim();
+
+      const rows = [];
+      document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
+        const apartment = tr.querySelector(".js-apartment").value.trim();
+        const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
+
+        const values = [];
+        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
+          const mode = entry.dataset.mode;
+          if(mode === "double"){
+            values.push({
+              mode: "double",
+              proj: entry.querySelector(".js-proj").value.trim(),
+              uppm: entry.querySelector(".js-uppm").value.trim()
+            });
+          } else if(mode === "quick"){
+            values.push({
+              mode: "quick",
+              value: entry.dataset.quickValue || ""
+            });
+          } else {
+            values.push({
+              mode: "single",
+              value: entry.querySelector(".js-single").value.trim()
+            });
+          }
+        });
+
+        rows.push({
+          apartment,
+          values,
+          note: noteData
+        });
+      });
+
+      currentProject.rows = rows;
+    }
+
     function rebuildRowsForTemplateChange(){
       const oldRows = currentProject.rows;
-      const newEmpty = buildEmptyValueArray(currentProject.template);
+      const newTemplate = currentProject.template;
 
       currentProject.rows = oldRows.map(row => {
-        const newValues = [];
-        for(let i = 0; i < newEmpty.length; i++){
-          const old = row.values[i];
-          const fresh = newEmpty[i];
-          if(old && old.mode === fresh.mode){
-            newValues.push(old);
+        const fresh = buildEmptyValueArray(newTemplate);
+        const reused = [];
+        for(let i=0; i<fresh.length; i++){
+          if(row.values[i] && row.values[i].mode === fresh[i].mode){
+            reused.push(row.values[i]);
           } else {
-            newValues.push(fresh);
+            reused.push(fresh[i]);
           }
         }
         return {
           apartment: row.apartment,
-          values: newValues,
+          values: reused,
           note: row.note || { level:0, text:"" }
         };
       });
@@ -998,8 +1055,8 @@
     }
 
     function noteBadge(level){
-      if(level === 1) return `<span style="color:var(--yellow)">*</span>`;
-      if(level === 2) return `<span style="color:var(--red)">**</span>`;
+      if(level === 1) return `<span style="color:#d8a100">*</span>`;
+      if(level === 2) return `<span style="color:#c62828">**</span>`;
       return ``;
     }
 
@@ -1048,12 +1105,11 @@
           }
         });
 
-        const noteClass = note.level === 2 ? "level-2" : note.level === 1 ? "level-1" : "";
-        const noteHas = note.text ? "has-note" : "empty";
+        const noteClass = note.level === 2 ? "level-2" : note.level === 1 ? "level-1" : "empty";
 
         html += `
           <td>
-            <button class="note-btn ${noteClass} ${noteHas}" type="button" onclick="openNoteModal(${rowIndex})">
+            <button class="note-btn ${noteClass}" type="button" onclick="openNoteModal(${rowIndex})">
               ${note.text ? "📝 " + (note.level === 1 ? "*" : note.level === 2 ? "**" : "") : "📝"}
             </button>
           </td>
@@ -1088,7 +1144,6 @@
       document.getElementById("noteModalText").value = note.text || "";
       currentNoteLevel = note.level || 0;
       refreshNoteLevelButtons();
-
       document.getElementById("noteModal").classList.remove("hidden");
     }
 
@@ -1202,11 +1257,40 @@
         }
       });
 
-      row1.push({ content: "Not.", rowSpan: 2 });
-      return [row1, row2];
+      row1.push({ content: "Not." });
+      return hasDouble ? [row1, row2] : [row1];
     }
 
-    function exportPDF(){
+    function getLogoDataUrl(){
+      return new Promise((resolve) => {
+        if(cachedLogoDataUrl){
+          resolve(cachedLogoDataUrl);
+          return;
+        }
+
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = function(){
+          try{
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            cachedLogoDataUrl = canvas.toDataURL("image/png");
+            resolve(cachedLogoDataUrl);
+          } catch(e){
+            resolve(null);
+          }
+        };
+        img.onerror = function(){
+          resolve(null);
+        };
+        img.src = "logo.png";
+      });
+    }
+
+    async function exportPDF(){
       collectUiIntoProject();
 
       const { jsPDF } = window.jspdf;
@@ -1215,12 +1299,18 @@
       const prefix = getDocumentPrefix();
       const pdfTitle = `${prefix} ${currentProject.documentTitle}`;
 
-      doc.setFillColor(242, 140, 40);
-      doc.rect(8, 8, 281, 12, "F");
+      const logoDataUrl = await getLogoDataUrl();
+
+      if(logoDataUrl){
+        doc.addImage(logoDataUrl, "PNG", 10, 6, 42, 14);
+      }
+
+      doc.setFillColor(224, 172, 0);
+      doc.rect(8, 24, 281, 12, "F");
 
       doc.setTextColor(255,255,255);
       doc.setFontSize(13);
-      doc.text(pdfTitle, 148, 16, { align: "center" });
+      doc.text(pdfTitle, 148, 32, { align: "center" });
 
       doc.setTextColor(20);
 
@@ -1245,7 +1335,7 @@
       });
 
       doc.autoTable({
-        startY: 24,
+        startY: 40,
         head: buildPdfHead(),
         body: body,
         theme: "grid",
@@ -1268,22 +1358,8 @@
         },
         didParseCell: function(data){
           if (data.section === 'head' && data.row.index === 1) {
-            data.cell.styles.fillColor = [236, 231, 223];
+            data.cell.styles.fillColor = [241, 235, 227];
             data.cell.styles.textColor = [20,20,20];
-          }
-        },
-        didDrawCell: function(data){
-          if(data.section === "body" && data.column.index === 0){
-            const raw = String(data.cell.raw || "");
-            if(raw.endsWith("**")){
-              doc.setTextColor(198,40,40);
-              doc.text("**", data.cell.x + data.cell.width - 4, data.cell.y + 4);
-              doc.setTextColor(20);
-            } else if(raw.endsWith("*")){
-              doc.setTextColor(216,161,0);
-              doc.text("*", data.cell.x + data.cell.width - 3, data.cell.y + 4);
-              doc.setTextColor(20);
-            }
           }
         }
       });
@@ -1361,1487 +1437,6 @@
     }
 
     init();
-  </script>
-</body>
-</html>      text-transform:uppercase;
-      letter-spacing:.4px;
-      margin-bottom:6px;
-    }
-
-    input, select{
-      width:100%;
-      border:1px solid var(--line);
-      padding:10px 10px;
-      border-radius:0;
-      background:#fff;
-      font-size:14px;
-      outline:none;
-    }
-
-    input:focus, select:focus{
-      background:#fff8f0;
-    }
-
-    .title-input{
-      font-size:22px;
-      font-weight:700;
-      text-align:center;
-      padding:12px;
-      border:1px solid var(--line);
-      width:100%;
-    }
-
-    .system-buttons{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-      margin-top:8px;
-    }
-
-    .sys-btn{
-      border:1px solid var(--line);
-      background:#fff;
-      padding:14px 10px;
-      font-weight:700;
-      cursor:pointer;
-      font-size:14px;
-    }
-
-    .sys-btn.active{
-      background:var(--orange);
-      color:#fff;
-      border-color:#995d1b;
-    }
-
-    .executor-row{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:8px;
-      margin-bottom:8px;
-    }
-
-    .small-btn, .btn, .btn-primary, .btn-danger{
-      border-radius:0;
-      font-weight:700;
-      cursor:pointer;
-      font-size:14px;
-    }
-
-    .small-btn{
-      padding:10px 12px;
-      border:1px solid var(--line);
-      background:#fff;
-    }
-
-    .btn{
-      padding:11px 16px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:#111;
-    }
-
-    .btn-primary{
-      padding:11px 16px;
-      border:1px solid #995d1b;
-      background:var(--orange);
-      color:#fff;
-    }
-
-    .btn-danger{
-      padding:11px 16px;
-      border:1px solid #8f3f3f;
-      background:#fff;
-      color:#7a1f1f;
-    }
-
-    .toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-top:12px;
-    }
-
-    .title-bar{
-      margin-bottom:12px;
-    }
-
-    .table-wrap{
-      overflow:auto;
-      border:1px solid var(--line);
-      background:#fff;
-    }
-
-    table{
-      width:100%;
-      min-width:1600px;
-      border-collapse:collapse;
-      table-layout:fixed;
-    }
-
-    thead th{
-      border:1px solid var(--line);
-      padding:8px 6px;
-      text-align:center;
-      font-size:13px;
-      white-space:nowrap;
-    }
-
-    thead tr.main-head th{
-      background:var(--dark);
-      color:#fff;
-      position:sticky;
-      top:0;
-      z-index:3;
-    }
-
-    thead tr.sub-head th{
-      background:var(--sub);
-      color:#111;
-      position:sticky;
-      top:37px;
-      z-index:2;
-    }
-
-    tbody td{
-      border:1px solid var(--line-soft);
-      padding:0;
-      background:#fff;
-    }
-
-    tbody tr:nth-child(even) td{
-      background:var(--row-alt);
-    }
-
-    .apt-cell{
-      background:#f1ede7 !important;
-      font-weight:700;
-    }
-
-    .cell-input{
-      width:100%;
-      min-height:34px;
-      border:none;
-      background:transparent;
-      padding:8px 6px;
-      font-size:13px;
-      outline:none;
-      text-align:center;
-    }
-
-    .cell-input.left{
-      text-align:left;
-    }
-
-    .cell-input:focus{
-      background:#fff7ef;
-    }
-
-    .footer-grid{
-      display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
-      gap:12px;
-      margin-top:14px;
-    }
-
-    .footer-box{
-      border:1px solid var(--line);
-      background:#fff;
-      padding:14px;
-    }
-
-    .status{
-      margin-top:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:10px 12px;
-      font-size:14px;
-    }
-
-    .muted{
-      color:#666;
-      font-size:13px;
-    }
-
-    .project-list{
-      border:1px solid var(--line);
-      background:#fff;
-      max-height:340px;
-      overflow:auto;
-    }
-
-    .project-item{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:8px;
-      align-items:center;
-      padding:10px 12px;
-      border-bottom:1px solid var(--line-soft);
-    }
-
-    .project-item:last-child{
-      border-bottom:none;
-    }
-
-    .project-name{
-      font-weight:700;
-      margin-bottom:4px;
-    }
-
-    .project-meta{
-      font-size:12px;
-      color:#666;
-    }
-
-    @media (max-width:1100px){
-      .grid-4, .grid-3, .grid-2, .system-buttons, .footer-grid{
-        grid-template-columns:1fr;
-      }
-
-      .project-item{
-        grid-template-columns:1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-
-    <!-- START -->
-    <div id="startScreen">
-      <div class="panel">
-        <h2>Nytt protokoll</h2>
-
-        <div class="grid grid-2">
-          <div>
-            <label>Projektnamn (mappnamn)</label>
-            <input id="startProjectName" placeholder="Brf Eken">
-          </div>
-          <div>
-            <label>Dokumentrubrik (första raden)</label>
-            <input id="startDocumentTitle" placeholder="Brf Eken, Skebokvarnsvägen 14, Täby">
-          </div>
-        </div>
-
-        <div style="margin-top:14px;">
-          <label>Systemtyp</label>
-          <div class="system-buttons">
-            <button class="sys-btn" onclick="selectSystem('självdrag', this)">Självdrag</button>
-            <button class="sys-btn" onclick="selectSystem('frånluft', this)">Frånluft</button>
-            <button class="sys-btn" onclick="selectSystem('ftx', this)">FTX</button>
-            <button class="sys-btn" onclick="selectSystem('ft', this)">FT</button>
-          </div>
-        </div>
-
-        <div style="margin-top:14px;">
-          <label>Utförare</label>
-          <div id="executorsList"></div>
-          <div class="toolbar">
-            <button class="btn" onclick="addExecutor()">Lägg till utförare</button>
-          </div>
-        </div>
-
-        <div class="toolbar" style="margin-top:18px;">
-          <button class="btn-primary" onclick="createNewProject()">Öppna mall</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h2>Sparade projekt</h2>
-        <div class="grid grid-2">
-          <div>
-            <label>Sök projekt</label>
-            <input id="projectSearch" placeholder="Sök på namn eller system" oninput="renderSavedProjects()">
-          </div>
-        </div>
-
-        <div id="savedProjectsList" class="project-list" style="margin-top:12px;"></div>
-      </div>
-    </div>
-
-    <!-- WORK -->
-    <div id="workScreen" class="hidden">
-      <div class="panel title-bar">
-        <input id="projectTitle" class="title-input">
-        <div class="muted" style="margin-top:8px;">
-          System: <strong id="systemLabel"></strong> |
-          Projektnamn: <strong id="folderNameLabel"></strong> |
-          Utförare: <strong id="executorsLabel"></strong>
-        </div>
-      </div>
-
-      <div id="editorPanel" class="panel">
-        <h3>Redigering av mall</h3>
-        <div id="editorControls" class="toolbar"></div>
-      </div>
-
-      <div class="table-wrap">
-        <table id="protocolTable">
-          <thead id="tableHead"></thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="toolbar">
-        <button class="btn" onclick="addApartmentRow()">Lägg till rad</button>
-        <button class="btn" onclick="removeApartmentRow()">Ta bort rad</button>
-        <button class="btn" onclick="backToStart()">Till startsidan</button>
-        <button class="btn-primary" onclick="exportPDF()">Klar / Exportera PDF</button>
-      </div>
-
-      <div class="footer-grid">
-        <div class="footer-box">
-          <label>Datum</label>
-          <input type="date" id="dateField">
-        </div>
-        <div class="footer-box">
-          <label>Mätmetod / kalibreringsnummer</label>
-          <input id="methodField" placeholder="Ange metod och kal.nr">
-        </div>
-        <div class="footer-box">
-          <label>Utfört av</label>
-          <input id="performedByField" placeholder="Namn eller flera namn">
-        </div>
-      </div>
-
-      <div id="statusBox" class="status">Status: Redo</div>
-    </div>
-
-  </div>
-
-  <script>
-    const STORAGE_KEY = "ovk_app_projects_v1";
-    const APP_STATE_KEY = "ovk_app_current_project_id";
-
-    const templates = {
-      "självdrag": {
-        title: "Självdrag",
-        groups: [
-          { key: "kok", label: "Kök", type: "single", count: 1 },
-          { key: "bad", label: "Badrum", type: "single", count: 1 },
-          { key: "wc", label: "WC", type: "single", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "single", count: 1 },
-          { key: "rum", label: "Rum", type: "single", count: 1 }
-        ]
-      },
-      "frånluft": {
-        title: "Frånluft",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "rum", label: "Rum", type: "double", count: 1 }
-        ]
-      },
-      "ftx": {
-        title: "FTX",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "vard", label: "Vardagsrum", type: "double", count: 1 },
-          { key: "sov", label: "Sovrum", type: "double", count: 1 }
-        ]
-      },
-      "ft": {
-        title: "FT",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "vard", label: "Vardagsrum", type: "double", count: 1 },
-          { key: "sov", label: "Sovrum", type: "double", count: 1 }
-        ]
-      }
-    };
-
-    let selectedSystem = "";
-    let currentProject = null;
-    let autosaveTimer = null;
-
-    function clone(obj){
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    function uid(){
-      return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-    }
-
-    function getProjects(){
-      try{
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      } catch(e){
-        return [];
-      }
-    }
-
-    function setProjects(projects){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    }
-
-    function setCurrentProjectId(id){
-      localStorage.setItem(APP_STATE_KEY, id || "");
-    }
-
-    function getCurrentProjectId(){
-      return localStorage.getItem(APP_STATE_KEY) || "";
-    }
-
-    function setStatus(text){
-      const el = document.getElementById("statusBox");
-      if(el) el.textContent = "Status: " + text;
-    }
-
-    function addExecutor(value = ""){
-      const list = document.getElementById("executorsList");
-      const row = document.createElement("div");
-      row.className = "executor-row";
-      row.innerHTML = `
-        <input value="${escapeHtml(value)}" placeholder="Namn på utförare">
-        <button class="small-btn" type="button">Ta bort</button>
-        <button class="small-btn" type="button">Kopiera</button>
-      `;
-      const buttons = row.querySelectorAll("button");
-      buttons[0].onclick = () => {
-        row.remove();
-        if (!document.querySelectorAll("#executorsList .executor-row").length) addExecutor();
-      };
-      buttons[1].onclick = () => {
-        addExecutor(row.querySelector("input").value);
-      };
-      list.appendChild(row);
-    }
-
-    function selectSystem(system, btn){
-      selectedSystem = system;
-      document.querySelectorAll(".sys-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    }
-
-    function createNewProject(){
-      const projectName = document.getElementById("startProjectName").value.trim();
-      const documentTitle = document.getElementById("startDocumentTitle").value.trim();
-      const executors = [...document.querySelectorAll("#executorsList input")].map(i => i.value.trim()).filter(Boolean);
-
-      if(!projectName){
-        alert("Fyll i projektnamn.");
-        return;
-      }
-      if(!documentTitle){
-        alert("Fyll i dokumentrubrik.");
-        return;
-      }
-      if(!selectedSystem){
-        alert("Välj systemtyp.");
-        return;
-      }
-
-      currentProject = {
-        id: uid(),
-        projectName,
-        documentTitle,
-        system: selectedSystem,
-        executors: executors.length ? executors : [""],
-        date: new Date().toISOString().slice(0,10),
-        method: "",
-        performedBy: executors.join(", "),
-        template: clone(templates[selectedSystem]),
-        rows: buildInitialRows(clone(templates[selectedSystem]), 32),
-        exportCount: 0,
-        updatedAt: new Date().toISOString()
-      };
-
-      saveCurrentProject();
-      openCurrentProject();
-    }
-
-    function buildInitialRows(template, count){
-      const rows = [];
-      for(let i=1; i<=count; i++){
-        rows.push({
-          apartment: makeApartmentLabel(i),
-          values: buildEmptyValueArray(template),
-          note: ""
-        });
-      }
-      return rows;
-    }
-
-    function buildEmptyValueArray(template){
-      const arr = [];
-      template.groups.forEach(group => {
-        for(let i=1; i<=group.count; i++){
-          if(group.type === "double"){
-            arr.push({ mode:"double", proj:"", uppm:"" });
-          } else {
-            arr.push({ mode:"single", value:"" });
-          }
-        }
-      });
-      return arr;
-    }
-
-    function makeApartmentLabel(n){
-      const floor = 11 + Math.floor((n - 1) / 3);
-      const door = ((n - 1) % 3) + 1;
-      return `${floor}0${door}`;
-    }
-
-    function escapeHtml(str){
-      return String(str || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    function renderSavedProjects(){
-      const list = document.getElementById("savedProjectsList");
-      const q = (document.getElementById("projectSearch").value || "").toLowerCase().trim();
-      const projects = getProjects()
-        .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
-        .filter(p => {
-          const hay = `${p.projectName} ${p.documentTitle} ${p.system}`.toLowerCase();
-          return !q || hay.includes(q);
-        });
-
-      if(!projects.length){
-        list.innerHTML = `<div style="padding:12px;">Inga sparade projekt.</div>`;
-        return;
-      }
-
-      list.innerHTML = projects.map(p => `
-        <div class="project-item">
-          <div>
-            <div class="project-name">${escapeHtml(p.projectName)}</div>
-            <div class="project-meta">
-              ${escapeHtml(p.documentTitle)} · ${escapeHtml(p.system)} · Senast ändrad ${formatDateTime(p.updatedAt)}
-            </div>
-          </div>
-          <button class="btn" onclick="loadProject('${p.id}')">Öppna</button>
-          <button class="btn-danger" onclick="deleteProject('${p.id}')">Ta bort</button>
-        </div>
-      `).join("");
-    }
-
-    function formatDateTime(iso){
-      if(!iso) return "-";
-      const d = new Date(iso);
-      if (isNaN(d)) return "-";
-      return d.toLocaleString("sv-SE");
-    }
-
-    function saveCurrentProject(){
-      if(!currentProject) return;
-      currentProject.updatedAt = new Date().toISOString();
-      const projects = getProjects();
-      const idx = projects.findIndex(p => p.id === currentProject.id);
-      if(idx >= 0) projects[idx] = currentProject;
-      else projects.push(currentProject);
-      setProjects(projects);
-      setCurrentProjectId(currentProject.id);
-      renderSavedProjects();
-    }
-
-    function autosave(){
-      if(!currentProject) return;
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(() => {
-        collectUiIntoProject();
-        saveCurrentProject();
-        setStatus("Autosparat.");
-      }, 250);
-    }
-
-    function collectUiIntoProject(){
-      if(!currentProject) return;
-
-      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
-      currentProject.date = document.getElementById("dateField").value;
-      currentProject.method = document.getElementById("methodField").value.trim();
-      currentProject.performedBy = document.getElementById("performedByField").value.trim();
-
-      const rows = [];
-      document.querySelectorAll("#tableBody tr").forEach(tr => {
-        const apartment = tr.querySelector(".js-apartment").value.trim();
-        const note = tr.querySelector(".js-note").value.trim();
-
-        const values = [];
-        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
-          const mode = entry.dataset.mode;
-          if(mode === "double"){
-            values.push({
-              mode: "double",
-              proj: entry.querySelector(".js-proj").value.trim(),
-              uppm: entry.querySelector(".js-uppm").value.trim()
-            });
-          } else {
-            values.push({
-              mode: "single",
-              value: entry.querySelector(".js-single").value.trim()
-            });
-          }
-        });
-
-        rows.push({ apartment, values, note });
-      });
-
-      currentProject.rows = rows;
-    }
-
-    function loadProject(id){
-      const projects = getProjects();
-      const found = projects.find(p => p.id === id);
-      if(!found) return;
-      currentProject = found;
-      setCurrentProjectId(currentProject.id);
-      openCurrentProject();
-    }
-
-    function deleteProject(id){
-      if(!confirm("Ta bort projektet?")) return;
-      const projects = getProjects().filter(p => p.id !== id);
-      setProjects(projects);
-      if(getCurrentProjectId() === id) setCurrentProjectId("");
-      if(currentProject && currentProject.id === id) currentProject = null;
-      renderSavedProjects();
-    }
-
-    function openCurrentProject(){
-      document.getElementById("startScreen").classList.add("hidden");
-      document.getElementById("workScreen").classList.remove("hidden");
-
-      document.getElementById("projectTitle").value = currentProject.documentTitle || "";
-      document.getElementById("systemLabel").textContent = currentProject.template.title;
-      document.getElementById("folderNameLabel").textContent = currentProject.projectName || "";
-      document.getElementById("executorsLabel").textContent = (currentProject.executors || []).join(", ");
-      document.getElementById("dateField").value = currentProject.date || new Date().toISOString().slice(0,10);
-      document.getElementById("methodField").value = currentProject.method || "";
-      document.getElementById("performedByField").value = currentProject.performedBy || "";
-
-      document.getElementById("projectTitle").oninput = autosave;
-      document.getElementById("dateField").oninput = autosave;
-      document.getElementById("methodField").oninput = autosave;
-      document.getElementById("performedByField").oninput = autosave;
-
-      renderEditor();
-      renderTable();
-      setStatus("Projekt öppnat.");
-    }
-
-    function backToStart(){
-      collectUiIntoProject();
-      saveCurrentProject();
-      document.getElementById("workScreen").classList.add("hidden");
-      document.getElementById("startScreen").classList.remove("hidden");
-      renderSavedProjects();
-    }
-
-    function renderEditor(){
-      const wrap = document.getElementById("editorControls");
-      wrap.innerHTML = "";
-
-      currentProject.template.groups.forEach((g, index) => {
-        const box = document.createElement("div");
-        box.style.border = "1px solid #b8b0a6";
-        box.style.padding = "10px";
-        box.style.background = "#fff";
-        box.innerHTML = `
-          <strong>${escapeHtml(g.label)}</strong>
-          <div class="muted" style="margin:6px 0 8px 0;">
-            Typ: ${g.type === "double" ? "Proj/Uppm" : "Enkel"}
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="small-btn" type="button">Lägg till</button>
-            <button class="small-btn" type="button">Ta bort</button>
-            ${(currentProject.system !== "självdrag") ? `<button class="small-btn" type="button">${g.type === "double" ? "Gör enkel" : "Gör proj/uppm"}</button>` : ""}
-          </div>
-        `;
-
-        const buttons = box.querySelectorAll("button");
-
-        buttons[0].onclick = () => {
-          g.count += 1;
-          rebuildRowsForTemplateChange();
-          renderEditor();
-          renderTable();
-          autosave();
-          setStatus(`${g.label}: kolumn tillagd.`);
-        };
-
-        buttons[1].onclick = () => {
-          if(g.count > 1){
-            g.count -= 1;
-            rebuildRowsForTemplateChange();
-            renderEditor();
-            renderTable();
-            autosave();
-            setStatus(`${g.label}: kolumn borttagen.`);
-          } else {
-            setStatus(`${g.label}: minst en måste finnas kvar.`);
-          }
-        };
-
-        if(buttons[2]){
-          buttons[2].onclick = () => {
-            g.type = g.type === "double" ? "single" : "double";
-            rebuildRowsForTemplateChange();
-            renderEditor();
-            renderTable();
-            autosave();
-            setStatus(`${g.label}: celltyp ändrad.`);
-          };
-        }
-
-        wrap.appendChild(box);
-      });
-    }
-
-    function rebuildRowsForTemplateChange(){
-      currentProject.rows = currentProject.rows.map(row => ({
-        apartment: row.apartment,
-        values: buildEmptyValueArray(currentProject.template),
-        note: row.note || ""
-      }));
-    }
-
-    function renderTable(){
-      renderHead();
-      renderBody();
-    }
-
-    function renderHead(){
-      const head = document.getElementById("tableHead");
-      const hasDouble = currentProject.template.groups.some(g => g.type === "double");
-
-      let row1 = `<tr class="main-head"><th rowspan="${hasDouble ? 2 : 1}">Lägenhet</th>`;
-      let row2 = `<tr class="sub-head">`;
-
-      currentProject.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
-          const label = g.count > 1 ? `${g.label} ${i}` : g.label;
-          if(g.type === "double"){
-            row1 += `<th colspan="2">${label}</th>`;
-            row2 += `<th>Proj</th><th>Uppm</th>`;
-          } else {
-            row1 += `<th rowspan="${hasDouble ? 2 : 1}">${label}</th>`;
-          }
-        }
-      });
-
-      row1 += `<th rowspan="${hasDouble ? 2 : 1}">Notering</th></tr>`;
-      row2 += `</tr>`;
-      head.innerHTML = hasDouble ? row1 + row2 : row1;
-    }
-
-    function renderBody(){
-      const body = document.getElementById("tableBody");
-      body.innerHTML = "";
-
-      currentProject.rows.forEach((row, rowIndex) => {
-        const tr = document.createElement("tr");
-
-        let html = `
-          <td class="apt-cell">
-            <input class="cell-input js-apartment" value="${escapeHtml(row.apartment || "")}">
-          </td>
-        `;
-
-        row.values.forEach((entry, entryIndex) => {
-          if(entry.mode === "double"){
-            html += `
-              <td data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-proj" maxlength="4" value="${escapeHtml(entry.proj || "")}">
-              </td>
-              <td data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-uppm" maxlength="4" value="${escapeHtml(entry.uppm || "")}">
-              </td>
-            `;
-          } else {
-            html += `
-              <td data-entry-index="${entryIndex}" data-mode="single">
-                <input class="cell-input js-single" maxlength="4" value="${escapeHtml(entry.value || "")}">
-              </td>
-            `;
-          }
-        });
-
-        html += `
-          <td>
-            <input class="cell-input left js-note" value="${escapeHtml(row.note || "")}">
-          </td>
-        `;
-
-        tr.innerHTML = html;
-        body.appendChild(tr);
-      });
-
-      bindTableAutosave();
-    }
-
-    function bindTableAutosave(){
-      document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = autosave;
-      });
-    }
-
-    function addApartmentRow(){
-      currentProject.rows.push({
-        apartment: makeApartmentLabel(currentProject.rows.length + 1),
-        values: buildEmptyValueArray(currentProject.template),
-        note: ""
-      });
-      renderBody();
-      autosave();
-      setStatus("Rad tillagd.");
-    }
-
-    function removeApartmentRow(){
-      if(currentProject.rows.length <= 1){
-        setStatus("Minst en rad måste finnas kvar.");
-        return;
-      }
-      currentProject.rows.pop();
-      renderBody();
-      autosave();
-      setStatus("Sista raden borttagen.");
-    }
-
-    function sanitizeFileName(name){
-      return String(name || "")
-        .replace(/[\\\\/:*?\"<>|]/g, "-")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    function getDocumentPrefix(){
-      return currentProject.system === "självdrag"
-        ? "Lägenhetsprotokoll"
-        : "Luftflödesprotokoll";
-    }
-
-    function getExportFileName(){
-      const base = `${getDocumentPrefix()} ${currentProject.documentTitle}`;
-      const cleanBase = sanitizeFileName(base);
-      const count = (currentProject.exportCount || 0) + 1;
-      if(count <= 1) return `${cleanBase}.pdf`;
-      return `${cleanBase} v.${count}.pdf`;
-    }
-
-    function buildPdfHead(){
-      const hasDouble = currentProject.template.groups.some(g => g.type === "double");
-
-      if(!hasDouble){
-        const row = [{ content: "Lägenhet", rowSpan: 1 }];
-        currentProject.template.groups.forEach(g => {
-          for(let i=1; i<=g.count; i++){
-            row.push({ content: g.count > 1 ? `${g.label} ${i}` : g.label, rowSpan: 1 });
-          }
-        });
-        row.push({ content: "Notering", rowSpan: 1 });
-        return [row];
-      }
-
-      const row1 = [{ content: "Lägenhet", rowSpan: 2 }];
-      const row2 = [];
-
-      currentProject.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
-          const label = g.count > 1 ? `${g.label} ${i}` : g.label;
-          if(g.type === "double"){
-            row1.push({ content: label, colSpan: 2 });
-            row2.push("Proj", "Uppm");
-          } else {
-            row1.push({ content: label, rowSpan: 2 });
-          }
-        }
-      });
-
-      row1.push({ content: "Notering", rowSpan: 2 });
-      return [row1, row2];
-    }
-
-    function exportPDF(){
-      collectUiIntoProject();
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF("landscape");
-
-      const prefix = getDocumentPrefix();
-      const pdfTitle = `${prefix} ${currentProject.documentTitle}`;
-
-      doc.setFillColor(242, 140, 40);
-      doc.rect(8, 8, 281, 12, "F");
-
-      doc.setTextColor(255,255,255);
-      doc.setFontSize(13);
-      doc.text(pdfTitle, 148, 16, { align: "center" });
-
-      doc.setTextColor(20);
-
-      const body = [];
-      currentProject.rows.forEach(row => {
-        const out = [row.apartment];
-        row.values.forEach(entry => {
-          if(entry.mode === "double"){
-            out.push(entry.proj || "", entry.uppm || "");
-          } else {
-            out.push(entry.value || "");
-          }
-        });
-        out.push(row.note || "");
-        body.push(out);
-      });
-
-      doc.autoTable({
-        startY: 24,
-        head: buildPdfHead(),
-        body: body,
-        theme: "grid",
-        styles: {
-          fontSize: 7,
-          cellPadding: 1.8,
-          textColor: 20,
-          lineColor: [170,170,170],
-          lineWidth: 0.1,
-          halign: "center",
-          valign: "middle"
-        },
-        headStyles: {
-          fillColor: [47,47,47],
-          textColor: 255,
-          fontStyle: "bold"
-        },
-        alternateRowStyles: {
-          fillColor: [248,246,243]
-        },
-        didParseCell: function(data){
-          if (data.section === 'head' && data.row.index === 1) {
-            data.cell.styles.fillColor = [236, 231, 223];
-            data.cell.styles.textColor = [20,20,20];
-          }
-        }
-      });
-
-      const finalY = Math.min(doc.lastAutoTable.finalY + 10, 180);
-
-      doc.setDrawColor(120,120,120);
-      doc.rect(12, finalY, 60, 18);
-      doc.rect(98, finalY, 88, 18);
-      doc.rect(212, finalY, 60, 18);
-
-      doc.setFontSize(9);
-      doc.text("Datum", 15, finalY + 5);
-      doc.text("Mätmetod / kalibreringsnummer", 101, finalY + 5);
-      doc.text("Utfört av", 215, finalY + 5);
-
-      doc.setFontSize(10);
-      doc.text(String(currentProject.date || ""), 15, finalY + 12);
-      doc.text(String(currentProject.method || ""), 101, finalY + 12);
-      doc.text(String(currentProject.performedBy || ""), 215, finalY + 12);
-
-      const fileName = getExportFileName();
-      doc.save(fileName);
-
-      currentProject.exportCount = (currentProject.exportCount || 0) + 1;
-      saveCurrentProject();
-      setStatus(`PDF exporterad: ${fileName}`);
-    }
-
-    function init(){
-      addExecutor();
-      renderSavedProjects();
-
-      const lastId = getCurrentProjectId();
-      if(lastId){
-        const projects = getProjects();
-        const found = projects.find(p => p.id === lastId);
-        if(found){
-          currentProject = found;
-          openCurrentProject();
-        }
-      }
-    }
-
-    init();
-  </script>
-</body>
-</html>      font-size:13px;
-    }
-
-    @media (max-width:1100px){
-      .grid-4, .grid-3, .grid-2, .system-buttons, .footer-grid{
-        grid-template-columns:1fr;
-      }
-      thead tr.sub-head th{
-        top:37px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-
-    <!-- START PAGE -->
-    <div id="startScreen" class="panel">
-      <h2>Nytt protokoll</h2>
-
-      <div class="grid grid-2">
-        <div>
-          <label>Projektnamn</label>
-          <input id="startProjectName" placeholder="Brf Doktorn, Smidesvägen 17 Södertälje">
-        </div>
-        <div>
-          <label>Systemtyp</label>
-          <div class="system-buttons">
-            <button class="sys-btn" data-system="sjalvdrag" onclick="selectSystem('självdrag', this)">Självdrag</button>
-            <button class="sys-btn" data-system="franluft" onclick="selectSystem('frånluft', this)">Frånluft</button>
-            <button class="sys-btn" data-system="ftx" onclick="selectSystem('ftx', this)">FTX</button>
-            <button class="sys-btn" data-system="ft" onclick="selectSystem('ft', this)">FT</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:14px;">
-        <label>Utförare</label>
-        <div id="executorsList"></div>
-        <div class="toolbar">
-          <button class="btn" onclick="addExecutor()">Lägg till utförare</button>
-        </div>
-      </div>
-
-      <div class="toolbar" style="margin-top:18px;">
-        <button class="btn-primary" onclick="startProject()">Öppna mall</button>
-      </div>
-    </div>
-
-    <!-- WORK PAGE -->
-    <div id="workScreen" class="hidden">
-      <div class="panel title-bar">
-        <input id="projectTitle" class="title-input">
-        <div class="muted" style="margin-top:8px;">
-          System: <strong id="systemLabel"></strong> |
-          Utförare: <strong id="executorsLabel"></strong>
-        </div>
-      </div>
-
-      <div id="editorPanel" class="panel">
-        <h3>Redigering av mall</h3>
-        <div id="editorControls" class="toolbar"></div>
-      </div>
-
-      <div class="table-wrap">
-        <table id="protocolTable">
-          <thead id="tableHead"></thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="toolbar">
-        <button class="btn" onclick="addApartmentRow()">Lägg till rad</button>
-        <button class="btn" onclick="removeApartmentRow()">Ta bort rad</button>
-        <button class="btn" onclick="goBack()">Tillbaka</button>
-        <button class="btn-primary" onclick="exportPDF()">Klar / Exportera PDF</button>
-      </div>
-
-      <div class="footer-grid">
-        <div class="footer-box">
-          <label>Datum</label>
-          <input type="date" id="dateField">
-        </div>
-        <div class="footer-box">
-          <label>Mätmetod / kalibreringsnummer</label>
-          <input id="methodField" placeholder="Ange metod och kal.nr">
-        </div>
-        <div class="footer-box">
-          <label>Utfört av</label>
-          <input id="performedByField" placeholder="Namn eller flera namn">
-        </div>
-      </div>
-
-      <div id="statusBox" class="status">Status: Redo</div>
-    </div>
-
-  </div>
-
-  <script>
-    const state = {
-      system: "",
-      projectName: "",
-      executors: [""],
-      rows: 32,
-      template: null
-    };
-
-    const templates = {
-      "självdrag": {
-        title: "Självdrag",
-        groups: [
-          { key: "kok", label: "Kök", type: "single", count: 1 },
-          { key: "bad", label: "Badrum", type: "single", count: 1 },
-          { key: "wc", label: "WC", type: "single", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "single", count: 1 },
-          { key: "rum", label: "Rum", type: "single", count: 1 }
-        ]
-      },
-      "frånluft": {
-        title: "Frånluft",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "rum", label: "Rum", type: "double", count: 1 }
-        ]
-      },
-      "ftx": {
-        title: "FTX",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "vard", label: "Vardagsrum", type: "double", count: 1 },
-          { key: "sov", label: "Sovrum", type: "double", count: 1 }
-        ]
-      },
-      "ft": {
-        title: "FT",
-        groups: [
-          { key: "kok", label: "Kök", type: "double", count: 1 },
-          { key: "bad", label: "Badrum", type: "double", count: 1 },
-          { key: "wc", label: "WC", type: "double", count: 1 },
-          { key: "klad", label: "Klädkammare", type: "double", count: 1 },
-          { key: "vard", label: "Vardagsrum", type: "double", count: 1 },
-          { key: "sov", label: "Sovrum", type: "double", count: 1 }
-        ]
-      }
-    };
-
-    function cloneTemplate(obj){
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    function setStatus(text){
-      const el = document.getElementById("statusBox");
-      if(el) el.textContent = "Status: " + text;
-    }
-
-    function addExecutor(value = ""){
-      const list = document.getElementById("executorsList");
-      const row = document.createElement("div");
-      row.className = "executor-row";
-      row.innerHTML = `
-        <input value="${value}" placeholder="Namn på utförare">
-        <button class="small-btn" type="button">Ta bort</button>
-        <button class="small-btn" type="button">Kopiera</button>
-      `;
-      const inputs = row.querySelectorAll("button");
-      inputs[0].onclick = () => {
-        row.remove();
-        if (!document.querySelectorAll("#executorsList .executor-row").length) addExecutor();
-      };
-      inputs[1].onclick = () => {
-        addExecutor(row.querySelector("input").value);
-      };
-      list.appendChild(row);
-    }
-
-    function selectSystem(system, btn){
-      state.system = system;
-      document.querySelectorAll(".sys-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    }
-
-    function startProject(){
-      const projectName = document.getElementById("startProjectName").value.trim();
-      const executorInputs = [...document.querySelectorAll("#executorsList input")].map(i => i.value.trim()).filter(Boolean);
-
-      if(!projectName){
-        alert("Fyll i projektnamn.");
-        return;
-      }
-      if(!state.system){
-        alert("Välj systemtyp.");
-        return;
-      }
-
-      state.projectName = projectName;
-      state.executors = executorInputs.length ? executorInputs : [""];
-      state.template = cloneTemplate(templates[state.system]);
-
-      document.getElementById("startScreen").classList.add("hidden");
-      document.getElementById("workScreen").classList.remove("hidden");
-      document.getElementById("projectTitle").value = projectName;
-      document.getElementById("systemLabel").textContent = state.template.title;
-      document.getElementById("executorsLabel").textContent = state.executors.join(", ");
-      document.getElementById("performedByField").value = state.executors.join(", ");
-      document.getElementById("dateField").value = new Date().toISOString().slice(0,10);
-
-      renderEditor();
-      renderTable();
-      setStatus("Projekt öppnat.");
-    }
-
-    function goBack(){
-      document.getElementById("workScreen").classList.add("hidden");
-      document.getElementById("startScreen").classList.remove("hidden");
-      setStatus("Tillbaka till startsidan.");
-    }
-
-    function makeApartmentLabel(n){
-      const floor = 11 + Math.floor((n - 1) / 3);
-      const door = ((n - 1) % 3) + 1;
-      return `${floor}0${door}`;
-    }
-
-    function addApartmentRow(){
-      const body = document.getElementById("tableBody");
-      const next = body.querySelectorAll("tr").length + 1;
-      body.appendChild(buildBodyRow(next));
-      setStatus("Rad tillagd.");
-    }
-
-    function removeApartmentRow(){
-      const rows = document.querySelectorAll("#tableBody tr");
-      if(rows.length > 1){
-        rows[rows.length - 1].remove();
-        setStatus("Sista raden borttagen.");
-      } else {
-        setStatus("Minst en rad måste finnas kvar.");
-      }
-    }
-
-    function renderEditor(){
-      const wrap = document.getElementById("editorControls");
-      wrap.innerHTML = "";
-
-      state.template.groups.forEach((g, index) => {
-        const box = document.createElement("div");
-        box.style.border = "1px solid #b8b0a6";
-        box.style.padding = "10px";
-        box.style.background = "#fff";
-        box.innerHTML = `
-          <strong>${g.label}</strong>
-          <div class="muted" style="margin:6px 0 8px 0;">
-            Typ: ${g.type === "double" ? "Proj/Uppm" : "Enkel"}
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="small-btn" type="button">Lägg till</button>
-            <button class="small-btn" type="button">Ta bort</button>
-            ${(state.system === "frånluft" || state.system === "ftx" || state.system === "ft") ? `<button class="small-btn" type="button">${g.type === "double" ? "Gör enkel" : "Gör proj/uppm"}</button>` : ""}
-          </div>
-        `;
-
-        const buttons = box.querySelectorAll("button");
-        buttons[0].onclick = () => {
-          g.count += 1;
-          renderEditor();
-          renderTable();
-          setStatus(`${g.label}: kolumn tillagd.`);
-        };
-        buttons[1].onclick = () => {
-          if(g.count > 1){
-            g.count -= 1;
-            renderEditor();
-            renderTable();
-            setStatus(`${g.label}: kolumn borttagen.`);
-          } else {
-            setStatus(`${g.label}: minst en måste finnas kvar.`);
-          }
-        };
-        if(buttons[2]){
-          buttons[2].onclick = () => {
-            g.type = g.type === "double" ? "single" : "double";
-            renderEditor();
-            renderTable();
-            setStatus(`${g.label}: celltyp ändrad.`);
-          };
-        }
-
-        wrap.appendChild(box);
-      });
-    }
-
-    function renderTable(){
-      renderHead();
-      renderBody();
-    }
-
-    function renderHead(){
-      const head = document.getElementById("tableHead");
-      const hasDouble = state.template.groups.some(g => g.type === "double");
-
-      let row1 = `<tr class="main-head"><th rowspan="${hasDouble ? 2 : 1}">Lägenhet</th>`;
-      let row2 = `<tr class="sub-head">`;
-
-      state.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
-          const label = g.count > 1 ? `${g.label} ${i}` : g.label;
-          if(g.type === "double"){
-            row1 += `<th colspan="2">${label}</th>`;
-            row2 += `<th>Proj</th><th>Uppm</th>`;
-          } else {
-            row1 += `<th rowspan="${hasDouble ? 2 : 1}">${label}</th>`;
-          }
-        }
-      });
-
-      row1 += `<th rowspan="${hasDouble ? 2 : 1}">Notering</th></tr>`;
-      row2 += `</tr>`;
-
-      head.innerHTML = hasDouble ? row1 + row2 : row1;
-    }
-
-    function buildBodyRow(n){
-      const tr = document.createElement("tr");
-      let html = `<td class="apt-cell"><input class="cell-input" value="${makeApartmentLabel(n)}"></td>`;
-
-      state.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
-          if(g.type === "double"){
-            html += `<td><input class="cell-input" maxlength="4"></td><td><input class="cell-input" maxlength="4"></td>`;
-          } else {
-            html += `<td><input class="cell-input" maxlength="4"></td>`;
-          }
-        }
-      });
-
-      html += `<td><input class="cell-input left"></td>`;
-      tr.innerHTML = html;
-      return tr;
-    }
-
-    function renderBody(){
-      const body = document.getElementById("tableBody");
-      const count = body.querySelectorAll("tr").length || state.rows;
-      body.innerHTML = "";
-      for(let i=1; i<=count; i++){
-        body.appendChild(buildBodyRow(i));
-      }
-    }
-
-    function sanitizeFileName(name){
-      return (name || "OVK-projekt")
-        .replace(/[\\\\/:*?\"<>|]/g, "-")
-        .replace(/\\s+/g, " ")
-        .trim();
-    }
-
-    function buildPdfHead(){
-      const hasDouble = state.template.groups.some(g => g.type === "double");
-
-      if(!hasDouble){
-        const row = [{ content: "Lägenhet", rowSpan: 1 }];
-        state.template.groups.forEach(g => {
-          for(let i=1; i<=g.count; i++){
-            row.push({ content: g.count > 1 ? `${g.label} ${i}` : g.label, rowSpan: 1 });
-          }
-        });
-        row.push({ content: "Notering", rowSpan: 1 });
-        return [row];
-      }
-
-      const row1 = [{ content: "Lägenhet", rowSpan: 2 }];
-      const row2 = [];
-
-      state.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
-          const label = g.count > 1 ? `${g.label} ${i}` : g.label;
-          if(g.type === "double"){
-            row1.push({ content: label, colSpan: 2 });
-            row2.push("Proj", "Uppm");
-          } else {
-            row1.push({ content: label, rowSpan: 2 });
-          }
-        }
-      });
-
-      row1.push({ content: "Notering", rowSpan: 2 });
-
-      return [row1, row2];
-    }
-
-    function exportPDF(){
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF("landscape");
-
-      const projectTitle = document.getElementById("projectTitle").value || state.projectName || "OVK-protokoll";
-      const date = document.getElementById("dateField").value || "";
-      const method = document.getElementById("methodField").value || "";
-      const performedBy = document.getElementById("performedByField").value || "";
-
-      doc.setFillColor(242, 140, 40);
-      doc.rect(8, 8, 281, 12, "F");
-
-      doc.setTextColor(255,255,255);
-      doc.setFontSize(13);
-      doc.text(projectTitle, 148, 16, { align: "center" });
-
-      doc.setTextColor(20);
-
-      const body = [];
-      document.querySelectorAll("#tableBody tr").forEach(tr => {
-        const row = [];
-        tr.querySelectorAll("input").forEach(input => row.push(input.value || ""));
-        body.push(row);
-      });
-
-      doc.autoTable({
-        startY: 24,
-        head: buildPdfHead(),
-        body: body,
-        theme: "grid",
-        styles: {
-          fontSize: 7,
-          cellPadding: 1.8,
-          textColor: 20,
-          lineColor: [170,170,170],
-          lineWidth: 0.1,
-          halign: "center",
-          valign: "middle"
-        },
-        headStyles: {
-          fillColor: [47,47,47],
-          textColor: 255,
-          fontStyle: "bold"
-        },
-        alternateRowStyles: {
-          fillColor: [248,246,243]
-        },
-        didParseCell: function(data){
-          if (data.section === 'head' && data.row.index === 1) {
-            data.cell.styles.fillColor = [236, 231, 223];
-            data.cell.styles.textColor = [20,20,20];
-          }
-        }
-      });
-
-      const finalY = Math.min(doc.lastAutoTable.finalY + 10, 180);
-
-      doc.setDrawColor(120,120,120);
-      doc.rect(12, finalY, 60, 18);
-      doc.rect(98, finalY, 88, 18);
-      doc.rect(212, finalY, 60, 18);
-
-      doc.setFontSize(9);
-      doc.text("Datum", 15, finalY + 5);
-      doc.text("Mätmetod / kalibreringsnummer", 101, finalY + 5);
-      doc.text("Utfört av", 215, finalY + 5);
-
-      doc.setFontSize(10);
-      doc.text(String(date), 15, finalY + 12);
-      doc.text(String(method), 101, finalY + 12);
-      doc.text(String(performedBy), 215, finalY + 12);
-
-      doc.save(`${sanitizeFileName(projectTitle)}.pdf`);
-      setStatus("PDF exporterad.");
-    }
-
-    // init
-    addExecutor();
   </script>
 </body>
 </html>
