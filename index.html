@@ -12,7 +12,6 @@
     :root{
       --orange:#E0AC00;
       --light-orange:#E3C04C;
-      --soft-orange:#FFF7DF;
       --bg:#f6f1ea;
       --panel:#ffffff;
       --line:#b8b0a6;
@@ -27,7 +26,7 @@
       --blue-soft:#dcebff;
     }
 
-    *{ box-sizing:border-box; }
+    * { box-sizing: border-box; }
 
     body{
       margin:0;
@@ -58,11 +57,6 @@
       width:auto;
       display:block;
       object-fit:contain;
-      flex:0 0 auto;
-    }
-
-    .brandtext{
-      line-height:1.2;
     }
 
     .brandtitle{
@@ -87,7 +81,7 @@
 
     .hidden{ display:none !important; }
 
-    h1,h2,h3{
+    h2,h3{
       margin:0 0 12px 0;
       font-weight:700;
     }
@@ -109,7 +103,7 @@
     input, textarea{
       width:100%;
       border:1px solid var(--line);
-      padding:10px 10px;
+      padding:10px;
       border-radius:0;
       background:#fff;
       font-size:14px;
@@ -171,7 +165,7 @@
       margin-bottom:8px;
     }
 
-    .small-btn, .btn, .btn-primary, .btn-danger{
+    .btn, .btn-primary, .btn-danger, .small-btn{
       border-radius:0;
       font-weight:700;
       cursor:pointer;
@@ -179,14 +173,14 @@
       user-select:none;
     }
 
-    .small-btn, .btn{
+    .btn, .small-btn{
       padding:11px 14px;
       border:1px solid var(--line);
       background:#fff;
       color:#111;
     }
 
-    .small-btn:hover, .btn:hover{
+    .btn:hover, .small-btn:hover{
       background:#fff6eb;
       border-color:var(--orange);
     }
@@ -196,10 +190,6 @@
       border:1px solid #a77b00;
       background:linear-gradient(180deg, var(--light-orange) 0%, var(--orange) 100%);
       color:#fff;
-    }
-
-    .btn-primary:hover{
-      filter:brightness(.97);
     }
 
     .btn-danger{
@@ -232,7 +222,6 @@
       overflow:auto;
       border:1px solid var(--line);
       background:#fff;
-      position:relative;
     }
 
     table{
@@ -315,13 +304,8 @@
       color:#666;
     }
 
-    .note-btn.level-1{
-      color:var(--yellow);
-    }
-
-    .note-btn.level-2{
-      color:var(--red);
-    }
+    .note-btn.level-1{ color:var(--yellow); }
+    .note-btn.level-2{ color:var(--red); }
 
     .footer-grid{
       display:grid;
@@ -363,10 +347,6 @@
       align-items:center;
       padding:10px 12px;
       border-bottom:1px solid var(--line-soft);
-    }
-
-    .project-item:last-child{
-      border-bottom:none;
     }
 
     .project-name{
@@ -482,25 +462,20 @@
       .grid-3, .grid-2, .system-buttons, .footer-grid, .note-levels{
         grid-template-columns:1fr;
       }
-
       .project-item{
         grid-template-columns:1fr;
       }
-
       .brandbar{
         flex-direction:column;
         align-items:flex-start;
       }
-
       .brandmark{
         height:54px;
       }
-
       .toolbar.spaced{
         flex-direction:column;
         align-items:flex-start;
       }
-
       .toolbar-left, .toolbar-right{
         width:100%;
       }
@@ -511,8 +486,8 @@
   <div class="app">
 
     <div class="brandbar">
-      <img src="logo.png" alt="Mäter i Sverige AB logga" class="brandmark" />
-      <div class="brandtext">
+      <img src="./logo.png" alt="Mäter i Sverige AB logga" class="brandmark" />
+      <div>
         <div class="brandtitle">Mäter i Sverige AB</div>
         <div class="brandsubtitle">OVK • Luftflöden • Lägenhetsprotokoll</div>
       </div>
@@ -564,7 +539,6 @@
             <input id="projectSearch" placeholder="Sök på namn eller system" oninput="renderSavedProjects()">
           </div>
         </div>
-
         <div id="savedProjectsList" class="project-list" style="margin-top:12px;"></div>
       </div>
     </div>
@@ -590,7 +564,7 @@
             <button id="cancelSelectedBtn" class="btn hidden" onclick="clearSelection()">Avmarkera</button>
           </div>
           <div class="toolbar-right">
-            <span class="muted">Ctrl/Cmd + klick på dator. Långtryck på mobil för att markera flera.</span>
+            <span class="muted">Ctrl/Cmd + klick på dator. Långtryck på mobil.</span>
           </div>
         </div>
       </div>
@@ -657,12 +631,11 @@
         </div>
       </div>
     </div>
-
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_projects_v5";
-    const APP_STATE_KEY = "ovk_app_current_project_id_v5";
+    const STORAGE_KEY = "ovk_app_projects_v6";
+    const APP_STATE_KEY = "ovk_app_current_project_id_v6";
     const HISTORY_LIMIT = 50;
 
     const templates = {
@@ -713,7 +686,6 @@
     let selectedSystem = "";
     let currentProject = null;
     let autosaveTimer = null;
-    let historyTimer = null;
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
     let cachedLogoDataUrl = null;
@@ -723,13 +695,8 @@
     let selectionMode = false;
     let longPressTimer = null;
 
-    function clone(obj){
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    function uid(){
-      return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-    }
+    function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+    function uid(){ return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9); }
 
     function escapeHtml(str){
       return String(str || "")
@@ -740,11 +707,8 @@
     }
 
     function getProjects(){
-      try{
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-      } catch(e){
-        return [];
-      }
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+      catch(e){ return []; }
     }
 
     function setProjects(projects){
@@ -799,13 +763,9 @@
       const arr = [];
       template.groups.forEach(group => {
         for(let i=1; i<=group.count; i++){
-          if(group.type === "double"){
-            arr.push({ mode:"double", proj:"", uppm:"" });
-          } else if(group.type === "quick"){
-            arr.push({ mode:"quick", value:"" });
-          } else {
-            arr.push({ mode:"single", value:"" });
-          }
+          if(group.type === "double") arr.push({ mode:"double", proj:"", uppm:"" });
+          else if(group.type === "quick") arr.push({ mode:"quick", value:"" });
+          else arr.push({ mode:"single", value:"" });
         }
       });
       return arr;
@@ -861,8 +821,8 @@
       currentProject.updatedAt = new Date().toISOString();
       const projects = getProjects();
       const idx = projects.findIndex(p => p.id === currentProject.id);
-      if(idx >= 0) projects[idx] = currentProject;
-      else projects.push(currentProject);
+      if(idx >= 0) projects[idx] = clone(currentProject);
+      else projects.push(clone(currentProject));
       setProjects(projects);
       setCurrentProjectId(currentProject.id);
       renderSavedProjects();
@@ -878,16 +838,9 @@
       }, 250);
     }
 
-    function scheduleHistoryCommit(){
-      clearTimeout(historyTimer);
-      historyTimer = setTimeout(() => {
-        collectUiIntoProject();
-        pushHistorySnapshot();
-      }, 350);
-    }
-
-    function pushHistorySnapshot(force = false){
+    function snapshotNow(force = false){
       if(!currentProject) return;
+      collectUiIntoProject();
       const snap = JSON.stringify(currentProject);
       if(!force && historyIndex >= 0 && historyStack[historyIndex] === snap) return;
 
@@ -905,7 +858,12 @@
     function resetHistory(){
       historyStack = [];
       historyIndex = -1;
-      pushHistorySnapshot(true);
+      snapshotNow(true);
+    }
+
+    function scheduleSnapshot(){
+      clearTimeout(window.__snapshotTimer);
+      window.__snapshotTimer = setTimeout(() => snapshotNow(false), 350);
     }
 
     function undoHistory(){
@@ -935,18 +893,9 @@
       const documentTitle = document.getElementById("startDocumentTitle").value.trim();
       const executors = [...document.querySelectorAll("#executorsList input")].map(i => i.value.trim()).filter(Boolean);
 
-      if(!projectName){
-        alert("Fyll i projektnamn.");
-        return;
-      }
-      if(!documentTitle){
-        alert("Fyll i dokumentrubrik.");
-        return;
-      }
-      if(!selectedSystem){
-        alert("Välj systemtyp.");
-        return;
-      }
+      if(!projectName){ alert("Fyll i projektnamn."); return; }
+      if(!documentTitle){ alert("Fyll i dokumentrubrik."); return; }
+      if(!selectedSystem){ alert("Välj systemtyp."); return; }
 
       currentProject = {
         id: uid(),
@@ -971,7 +920,7 @@
       const projects = getProjects();
       const found = projects.find(p => p.id === id);
       if(!found) return;
-      currentProject = found;
+      currentProject = clone(found);
       setCurrentProjectId(currentProject.id);
       openCurrentProject(true);
     }
@@ -997,12 +946,12 @@
       document.getElementById("methodField").value = currentProject.method || "";
       document.getElementById("performedByField").value = currentProject.performedBy || "";
 
-      document.getElementById("projectTitle").oninput = () => { autosave(); scheduleHistoryCommit(); };
-      document.getElementById("dateField").oninput = () => { autosave(); scheduleHistoryCommit(); };
-      document.getElementById("methodField").oninput = () => { autosave(); scheduleHistoryCommit(); };
-      document.getElementById("performedByField").oninput = () => { autosave(); scheduleHistoryCommit(); };
+      document.getElementById("projectTitle").oninput = () => { autosave(); scheduleSnapshot(); };
+      document.getElementById("dateField").oninput = () => { autosave(); scheduleSnapshot(); };
+      document.getElementById("methodField").oninput = () => { autosave(); scheduleSnapshot(); };
+      document.getElementById("performedByField").oninput = () => { autosave(); scheduleSnapshot(); };
 
-      clearSelection();
+      clearSelection(false);
       renderEditor();
       renderTable();
 
@@ -1031,8 +980,8 @@
       document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
         const apartment = tr.querySelector(".js-apartment").value.trim();
         const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
-
         const values = [];
+
         tr.querySelectorAll("[data-entry-index]").forEach(entry => {
           const mode = entry.dataset.mode;
           if(mode === "double"){
@@ -1054,53 +1003,17 @@
           }
         });
 
-        rows.push({
-          apartment,
-          values,
-          note: noteData
-        });
+        rows.push({ apartment, values, note: noteData });
       });
 
       currentProject.rows = rows;
-    }
-
-    function rebuildRowsForTemplateChange(){
-      const oldRows = currentProject.rows;
-      const template = currentProject.template;
-
-      currentProject.rows = oldRows.map(row => {
-        const rebuilt = [];
-        let oldIndex = 0;
-        template.groups.forEach(g => {
-          for(let i = 0; i < g.count; i++){
-            const old = row.values[oldIndex];
-            if(g.type === "double"){
-              if(old && old.mode === "double") rebuilt.push(old);
-              else rebuilt.push({ mode:"double", proj:"", uppm:"" });
-            } else if(g.type === "quick"){
-              if(old && old.mode === "quick") rebuilt.push(old);
-              else rebuilt.push({ mode:"quick", value:"" });
-            } else {
-              if(old && old.mode === "single") rebuilt.push(old);
-              else rebuilt.push({ mode:"single", value:"" });
-            }
-            oldIndex++;
-          }
-        });
-
-        return {
-          apartment: row.apartment,
-          values: rebuilt,
-          note: row.note || { level:0, text:"" }
-        };
-      });
     }
 
     function renderEditor(){
       const wrap = document.getElementById("editorControls");
       wrap.innerHTML = "";
 
-      currentProject.template.groups.forEach((g) => {
+      currentProject.template.groups.forEach((g, groupIndex) => {
         const box = document.createElement("div");
         box.style.border = "1px solid #b8b0a6";
         box.style.padding = "10px";
@@ -1113,7 +1026,6 @@
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="small-btn" type="button">Lägg till</button>
             <button class="small-btn" type="button">Ta bort</button>
-            ${(currentProject.system !== "självdrag") ? `<button class="small-btn" type="button">${g.type === "double" ? "Gör enkel" : "Gör proj/uppm"}</button>` : ""}
           </div>
         `;
 
@@ -1130,7 +1042,7 @@
           renderEditor();
           renderTable();
           autosave();
-          pushHistorySnapshot();
+          snapshotNow();
           setStatus(`${g.label}: kolumn tillagd.`);
         };
 
@@ -1139,26 +1051,21 @@
             setStatus(`${g.label}: minst en måste finnas kvar.`);
             return;
           }
-          if(!confirm(`Ta bort sista kolumnen för ${g.label}? Data i den kolumnen kan försvinna.`)){
-            return;
-          }
+          if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
 
           collectUiIntoProject();
 
-          // remove the last instance of this group's mode from each row
-          const targetMode = g.type;
+          // Remove last matching slot by walking structural positions
           currentProject.rows.forEach(row => {
-            let positions = [];
-            let cursor = 0;
+            const slots = [];
             currentProject.template.groups.forEach(group => {
               for(let i=0; i<group.count; i++){
-                positions.push({ groupKey: group.key, index: cursor });
-                cursor++;
+                slots.push(group.key);
               }
             });
-            for(let i = positions.length - 1; i >= 0; i--){
-              if(positions[i].groupKey === g.key){
-                row.values.splice(positions[i].index, 1);
+            for(let i = slots.length - 1; i >= 0; i--){
+              if(slots[i] === g.key){
+                row.values.splice(i, 1);
                 break;
               }
             }
@@ -1168,25 +1075,9 @@
           renderEditor();
           renderTable();
           autosave();
-          pushHistorySnapshot();
+          snapshotNow();
           setStatus(`${g.label}: kolumn borttagen.`);
         };
-
-        if(buttons[2]){
-          buttons[2].onclick = () => {
-            if(!confirm(`Ändra celltyp för ${g.label}?`)) return;
-            collectUiIntoProject();
-            g.type = g.type === "double" ? "single" : "double";
-            currentProject.rows.forEach(row => {
-              row.values = buildEmptyValueArray(currentProject.template);
-            });
-            renderEditor();
-            renderTable();
-            autosave();
-            pushHistorySnapshot();
-            setStatus(`${g.label}: celltyp ändrad.`);
-          };
-        }
 
         wrap.appendChild(box);
       });
@@ -1243,21 +1134,24 @@
         const aptCellId = makeCellId(rowIndex, -1, "apt");
         let html = `
           <td class="apt-cell selectable-cell ${selectedCells.has(aptCellId) ? "selected-cell" : ""}" data-cell-id="${aptCellId}">
-            <input class="cell-input js-apartment" value="${escapeHtml(row.apartment || "")}">
+            <input class="cell-input js-apartment" data-nav-col="0" data-row-index="${rowIndex}" value="${escapeHtml(row.apartment || "")}">
             <div style="font-size:12px; padding:0 6px 6px 6px;">${noteBadge(note.level)}</div>
           </td>
         `;
+
+        let navCol = 1;
 
         row.values.forEach((entry, entryIndex) => {
           if(entry.mode === "double"){
             const projId = makeCellId(rowIndex, entryIndex, "proj");
             const uppmId = makeCellId(rowIndex, entryIndex, "uppm");
+
             html += `
               <td class="selectable-cell ${selectedCells.has(projId) ? "selected-cell" : ""}" data-cell-id="${projId}" data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-proj" maxlength="4" value="${escapeHtml(entry.proj || "")}">
+                <input class="cell-input js-proj" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.proj || "")}">
               </td>
               <td class="selectable-cell ${selectedCells.has(uppmId) ? "selected-cell" : ""}" data-cell-id="${uppmId}" data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-uppm" maxlength="4" value="${escapeHtml(entry.uppm || "")}">
+                <input class="cell-input js-uppm" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.uppm || "")}">
               </td>
             `;
           } else if(entry.mode === "quick"){
@@ -1276,14 +1170,13 @@
             const singleId = makeCellId(rowIndex, entryIndex, "value");
             html += `
               <td class="selectable-cell ${selectedCells.has(singleId) ? "selected-cell" : ""}" data-cell-id="${singleId}" data-entry-index="${entryIndex}" data-mode="single">
-                <input class="cell-input js-single" maxlength="4" value="${escapeHtml(entry.value || "")}">
+                <input class="cell-input js-single" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.value || "")}">
               </td>
             `;
           }
         });
 
         const noteClass = note.level === 2 ? "level-2" : note.level === 1 ? "level-1" : "empty";
-
         html += `
           <td>
             <button class="note-btn ${noteClass}" type="button" onclick="event.stopPropagation(); openNoteModal(${rowIndex})">
@@ -1302,22 +1195,38 @@
 
     function bindTableInputs(){
       document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = () => { autosave(); scheduleHistoryCommit(); };
+        i.oninput = () => { autosave(); scheduleSnapshot(); };
         i.onclick = e => e.stopPropagation();
+        i.onkeydown = handleInputKeydown;
       });
+    }
+
+    function handleInputKeydown(e){
+      if(e.key === "Enter"){
+        e.preventDefault();
+        const currentCol = Number(e.target.dataset.navCol);
+        const currentRow = Number(e.target.dataset.rowIndex);
+        const next = document.querySelector(`[data-row-index="${currentRow + 1}"][data-nav-col="${currentCol}"]`);
+        if(next) next.focus();
+      }
     }
 
     function bindSelectableCells(){
       document.querySelectorAll(".selectable-cell").forEach(td => {
         td.addEventListener("click", (e) => {
-          const isMulti = e.ctrlKey || e.metaKey || selectionMode;
-          if(isMulti){
-            e.preventDefault();
-            toggleCellSelection(td.dataset.cellId);
-          }
+          const target = e.target;
+          const multi = e.ctrlKey || e.metaKey || selectionMode;
+          const clickedInput = target.tagName === "INPUT";
+
+          if(!multi) return;
+          e.preventDefault();
+          e.stopPropagation();
+          toggleCellSelection(td.dataset.cellId);
+          if(clickedInput) target.blur();
         });
 
         td.addEventListener("touchstart", () => {
+          clearTimeout(longPressTimer);
           longPressTimer = setTimeout(() => {
             selectionMode = true;
             toggleCellSelection(td.dataset.cellId);
@@ -1336,58 +1245,20 @@
       updateSelectionUi();
     }
 
-    function clearSelection(){
+    function clearSelection(rerender = true){
       selectedCells.clear();
       selectionMode = false;
-      renderBody();
+      if(rerender) renderBody();
       updateSelectionUi();
     }
 
     function updateSelectionUi(){
       const count = selectedCells.size;
-      const badge = document.getElementById("selectionBadge");
-      const fillBtn = document.getElementById("fillSelectedBtn");
-      const clearBtn = document.getElementById("clearSelectedBtn");
-      const cancelBtn = document.getElementById("cancelSelectedBtn");
-
-      badge.textContent = `${count} markerade`;
-      badge.classList.toggle("hidden", count === 0);
-      fillBtn.classList.toggle("hidden", count === 0);
-      clearBtn.classList.toggle("hidden", count === 0);
-      cancelBtn.classList.toggle("hidden", count === 0);
-    }
-
-    function fillSelectedCells(){
-      if(!selectedCells.size) return;
-      const value = prompt("Ange värde att fylla i markerade celler:");
-      if(value === null) return;
-
-      collectUiIntoProject();
-
-      for(const id of selectedCells){
-        applyValueToCellId(id, value);
-      }
-
-      renderBody();
-      autosave();
-      pushHistorySnapshot();
-      setStatus("Markerade celler fyllda.");
-    }
-
-    function clearSelectedCells(){
-      if(!selectedCells.size) return;
-      if(!confirm("Rensa markerade celler?")) return;
-
-      collectUiIntoProject();
-
-      for(const id of selectedCells){
-        applyValueToCellId(id, "");
-      }
-
-      renderBody();
-      autosave();
-      pushHistorySnapshot();
-      setStatus("Markerade celler rensade.");
+      document.getElementById("selectionBadge").textContent = `${count} markerade`;
+      document.getElementById("selectionBadge").classList.toggle("hidden", count === 0);
+      document.getElementById("fillSelectedBtn").classList.toggle("hidden", count === 0);
+      document.getElementById("clearSelectedBtn").classList.toggle("hidden", count === 0);
+      document.getElementById("cancelSelectedBtn").classList.toggle("hidden", count === 0);
     }
 
     function applyValueToCellId(id, value){
@@ -1413,11 +1284,38 @@
       }
     }
 
+    function fillSelectedCells(){
+      if(!selectedCells.size) return;
+      collectUiIntoProject();
+      const value = prompt("Ange värde att fylla i markerade celler:");
+      if(value === null) return;
+
+      for(const id of selectedCells) applyValueToCellId(id, value);
+
+      renderBody();
+      autosave();
+      snapshotNow();
+      setStatus("Markerade celler fyllda.");
+    }
+
+    function clearSelectedCells(){
+      if(!selectedCells.size) return;
+      if(!confirm("Rensa markerade celler?")) return;
+
+      collectUiIntoProject();
+      for(const id of selectedCells) applyValueToCellId(id, "");
+
+      renderBody();
+      autosave();
+      snapshotNow();
+      setStatus("Markerade celler rensade.");
+    }
+
     function setQuickValue(rowIndex, entryIndex, value){
       currentProject.rows[rowIndex].values[entryIndex].value = value;
       renderBody();
       autosave();
-      pushHistorySnapshot();
+      snapshotNow();
     }
 
     function openNoteModal(rowIndex){
@@ -1460,14 +1358,11 @@
     function saveNoteModal(){
       if(currentNoteRowIndex === null) return;
       const text = document.getElementById("noteModalText").value.trim();
-      currentProject.rows[currentNoteRowIndex].note = {
-        level: currentNoteLevel,
-        text
-      };
+      currentProject.rows[currentNoteRowIndex].note = { level: currentNoteLevel, text };
       closeNoteModal();
       renderBody();
       autosave();
-      pushHistorySnapshot();
+      snapshotNow();
       setStatus("Notering sparad.");
     }
 
@@ -1479,7 +1374,7 @@
       });
       renderBody();
       autosave();
-      pushHistorySnapshot();
+      snapshotNow();
       setStatus("Rad tillagd.");
     }
 
@@ -1492,7 +1387,7 @@
       currentProject.rows.pop();
       renderBody();
       autosave();
-      pushHistorySnapshot();
+      snapshotNow();
       setStatus("Sista raden borttagen.");
     }
 
@@ -1504,9 +1399,7 @@
     }
 
     function getDocumentPrefix(){
-      return currentProject.system === "självdrag"
-        ? "Lägenhetsprotokoll"
-        : "Luftflödesprotokoll";
+      return currentProject.system === "självdrag" ? "Lägenhetsprotokoll" : "Luftflödesprotokoll";
     }
 
     function getExportFileName(){
@@ -1521,10 +1414,10 @@
       const hasDouble = currentProject.template.groups.some(g => g.type === "double");
 
       if(!hasDouble){
-        const row = [{ content: "Lägenhet", rowSpan: 1 }];
+        const row = [{ content: "Lägenhet" }];
         currentProject.template.groups.forEach(g => {
           for(let i=1; i<=g.count; i++){
-            row.push({ content: g.count > 1 ? `${g.label} ${i}` : g.label, rowSpan: 1 });
+            row.push({ content: g.count > 1 ? `${g.label} ${i}` : g.label });
           }
         });
         row.push({ content: "Not." });
@@ -1546,8 +1439,8 @@
         }
       });
 
-      row1.push({ content: "Not." });
-      return hasDouble ? [row1, row2] : [row1];
+      row1.push({ content: "Not.", rowSpan: 2 });
+      return [row1, row2];
     }
 
     function getLogoDataUrl(){
@@ -1584,7 +1477,6 @@
 
       const prefix = getDocumentPrefix();
       const pdfTitle = `${prefix} ${currentProject.documentTitle}`;
-
       const logoDataUrl = await getLogoDataUrl();
 
       if(logoDataUrl){
@@ -1607,15 +1499,10 @@
         if(row.note?.level === 2) apt += "**";
 
         const out = [apt];
-
         row.values.forEach(entry => {
-          if(entry.mode === "double"){
-            out.push(entry.proj || "", entry.uppm || "");
-          } else {
-            out.push(entry.value || "");
-          }
+          if(entry.mode === "double") out.push(entry.proj || "", entry.uppm || "");
+          else out.push(entry.value || "");
         });
-
         out.push(row.note?.text ? "Ja" : "");
         body.push(out);
       });
@@ -1643,7 +1530,7 @@
           fillColor: [248,246,243]
         },
         didParseCell: function(data){
-          if (data.section === 'head' && data.row.index === 1) {
+          if (data.section === "head" && data.row.index === 1) {
             data.cell.styles.fillColor = [241, 235, 227];
             data.cell.styles.textColor = [20,20,20];
           }
@@ -1669,7 +1556,6 @@
           let label = n.apartment;
           if(n.level === 1) label += "*";
           if(n.level === 2) label += "**";
-
           const text = `${label} – ${n.text}`;
           const lines = doc.splitTextToSize(text, 260);
           finalY += 5;
@@ -1683,7 +1569,6 @@
       }
 
       finalY = Math.min(finalY + 6, 180);
-
       doc.setDrawColor(120,120,120);
       doc.rect(12, finalY, 60, 18);
       doc.rect(98, finalY, 88, 18);
@@ -1704,7 +1589,7 @@
 
       currentProject.exportCount = (currentProject.exportCount || 0) + 1;
       saveCurrentProject();
-      pushHistorySnapshot();
+      snapshotNow();
       setStatus(`PDF exporterad: ${fileName}`);
     }
 
@@ -1712,12 +1597,25 @@
       addExecutor();
       renderSavedProjects();
 
+      document.addEventListener("keydown", (e) => {
+        const ctrl = e.ctrlKey || e.metaKey;
+        if(ctrl && e.key.toLowerCase() === "z"){
+          e.preventDefault();
+          if(e.shiftKey) redoHistory();
+          else undoHistory();
+        }
+        if(ctrl && e.key.toLowerCase() === "y"){
+          e.preventDefault();
+          redoHistory();
+        }
+      });
+
       const lastId = getCurrentProjectId();
       if(lastId){
         const projects = getProjects();
         const found = projects.find(p => p.id === lastId);
         if(found){
-          currentProject = found;
+          currentProject = clone(found);
           openCurrentProject(true);
         }
       }
