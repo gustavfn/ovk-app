@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OVK Fältapp</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root{
@@ -23,6 +23,8 @@
       --row-alt:#fcfaf7;
       --yellow:#d8a100;
       --red:#c62828;
+      --blue:#2f6fed;
+      --blue-soft:#dcebff;
     }
 
     *{ box-sizing:border-box; }
@@ -174,6 +176,7 @@
       font-weight:700;
       cursor:pointer;
       font-size:14px;
+      user-select:none;
     }
 
     .small-btn, .btn{
@@ -211,17 +214,30 @@
       flex-wrap:wrap;
       gap:10px;
       margin-top:12px;
+      align-items:center;
+    }
+
+    .toolbar.spaced{
+      justify-content:space-between;
+    }
+
+    .toolbar-left, .toolbar-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
     }
 
     .table-wrap{
       overflow:auto;
       border:1px solid var(--line);
       background:#fff;
+      position:relative;
     }
 
     table{
       width:100%;
-      min-width:1600px;
+      min-width:1700px;
       border-collapse:collapse;
       table-layout:fixed;
     }
@@ -255,6 +271,7 @@
       padding:0;
       background:#fff;
       vertical-align:middle;
+      position:relative;
     }
 
     tbody tr:nth-child(even) td{
@@ -440,6 +457,27 @@
       border-color:#a77b00;
     }
 
+    .selected-cell{
+      outline:2px solid var(--blue);
+      outline-offset:-2px;
+      background:var(--blue-soft) !important;
+    }
+
+    .selection-badge{
+      font-size:12px;
+      padding:4px 8px;
+      border:1px solid var(--blue);
+      background:var(--blue-soft);
+      color:#1847a3;
+      font-weight:700;
+    }
+
+    .history-btn{
+      min-width:42px;
+      text-align:center;
+      padding:11px 12px;
+    }
+
     @media (max-width:1100px){
       .grid-3, .grid-2, .system-buttons, .footer-grid, .note-levels{
         grid-template-columns:1fr;
@@ -456,6 +494,15 @@
 
       .brandmark{
         height:54px;
+      }
+
+      .toolbar.spaced{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .toolbar-left, .toolbar-right{
+        width:100%;
       }
     }
   </style>
@@ -532,6 +579,22 @@
         </div>
       </div>
 
+      <div class="panel">
+        <div class="toolbar spaced">
+          <div class="toolbar-left">
+            <button class="btn history-btn" onclick="undoHistory()" title="Ångra">↶</button>
+            <button class="btn history-btn" onclick="redoHistory()" title="Gör om">↷</button>
+            <span id="selectionBadge" class="selection-badge hidden">0 markerade</span>
+            <button id="fillSelectedBtn" class="btn hidden" onclick="fillSelectedCells()">Fyll markerade</button>
+            <button id="clearSelectedBtn" class="btn hidden" onclick="clearSelectedCells()">Rensa markerade</button>
+            <button id="cancelSelectedBtn" class="btn hidden" onclick="clearSelection()">Avmarkera</button>
+          </div>
+          <div class="toolbar-right">
+            <span class="muted">Ctrl/Cmd + klick på dator. Långtryck på mobil för att markera flera.</span>
+          </div>
+        </div>
+      </div>
+
       <div id="editorPanel" class="panel">
         <h3>Redigering av mall</h3>
         <div id="editorControls" class="toolbar"></div>
@@ -598,8 +661,9 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_projects_v4";
-    const APP_STATE_KEY = "ovk_app_current_project_id_v4";
+    const STORAGE_KEY = "ovk_app_projects_v5";
+    const APP_STATE_KEY = "ovk_app_current_project_id_v5";
+    const HISTORY_LIMIT = 50;
 
     const templates = {
       "självdrag": {
@@ -649,9 +713,15 @@
     let selectedSystem = "";
     let currentProject = null;
     let autosaveTimer = null;
+    let historyTimer = null;
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
     let cachedLogoDataUrl = null;
+    let historyStack = [];
+    let historyIndex = -1;
+    let selectedCells = new Set();
+    let selectionMode = false;
+    let longPressTimer = null;
 
     function clone(obj){
       return JSON.parse(JSON.stringify(obj));
@@ -804,8 +874,60 @@
       autosaveTimer = setTimeout(() => {
         collectUiIntoProject();
         saveCurrentProject();
-        setStatus("Autosparat.");
+        setStatus("Autosparat lokalt.");
       }, 250);
+    }
+
+    function scheduleHistoryCommit(){
+      clearTimeout(historyTimer);
+      historyTimer = setTimeout(() => {
+        collectUiIntoProject();
+        pushHistorySnapshot();
+      }, 350);
+    }
+
+    function pushHistorySnapshot(force = false){
+      if(!currentProject) return;
+      const snap = JSON.stringify(currentProject);
+      if(!force && historyIndex >= 0 && historyStack[historyIndex] === snap) return;
+
+      if(historyIndex < historyStack.length - 1){
+        historyStack = historyStack.slice(0, historyIndex + 1);
+      }
+
+      historyStack.push(snap);
+      if(historyStack.length > HISTORY_LIMIT){
+        historyStack.shift();
+      }
+      historyIndex = historyStack.length - 1;
+    }
+
+    function resetHistory(){
+      historyStack = [];
+      historyIndex = -1;
+      pushHistorySnapshot(true);
+    }
+
+    function undoHistory(){
+      if(historyIndex <= 0){
+        setStatus("Inget mer att ångra.");
+        return;
+      }
+      historyIndex -= 1;
+      currentProject = JSON.parse(historyStack[historyIndex]);
+      openCurrentProject(false);
+      setStatus("Ångrade senaste ändringen.");
+    }
+
+    function redoHistory(){
+      if(historyIndex >= historyStack.length - 1){
+        setStatus("Inget mer att göra om.");
+        return;
+      }
+      historyIndex += 1;
+      currentProject = JSON.parse(historyStack[historyIndex]);
+      openCurrentProject(false);
+      setStatus("Gjorde om ändringen.");
     }
 
     function createNewProject(){
@@ -842,7 +964,7 @@
       };
 
       saveCurrentProject();
-      openCurrentProject();
+      openCurrentProject(true);
     }
 
     function loadProject(id){
@@ -851,7 +973,7 @@
       if(!found) return;
       currentProject = found;
       setCurrentProjectId(currentProject.id);
-      openCurrentProject();
+      openCurrentProject(true);
     }
 
     function deleteProject(id){
@@ -863,7 +985,7 @@
       renderSavedProjects();
     }
 
-    function openCurrentProject(){
+    function openCurrentProject(resetHistoryFlag = false){
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("workScreen").classList.remove("hidden");
 
@@ -875,13 +997,16 @@
       document.getElementById("methodField").value = currentProject.method || "";
       document.getElementById("performedByField").value = currentProject.performedBy || "";
 
-      document.getElementById("projectTitle").oninput = autosave;
-      document.getElementById("dateField").oninput = autosave;
-      document.getElementById("methodField").oninput = autosave;
-      document.getElementById("performedByField").oninput = autosave;
+      document.getElementById("projectTitle").oninput = () => { autosave(); scheduleHistoryCommit(); };
+      document.getElementById("dateField").oninput = () => { autosave(); scheduleHistoryCommit(); };
+      document.getElementById("methodField").oninput = () => { autosave(); scheduleHistoryCommit(); };
+      document.getElementById("performedByField").oninput = () => { autosave(); scheduleHistoryCommit(); };
 
+      clearSelection();
       renderEditor();
       renderTable();
+
+      if(resetHistoryFlag) resetHistory();
       setStatus("Projekt öppnat.");
     }
 
@@ -941,21 +1066,31 @@
 
     function rebuildRowsForTemplateChange(){
       const oldRows = currentProject.rows;
-      const newTemplate = currentProject.template;
+      const template = currentProject.template;
 
       currentProject.rows = oldRows.map(row => {
-        const fresh = buildEmptyValueArray(newTemplate);
-        const reused = [];
-        for(let i=0; i<fresh.length; i++){
-          if(row.values[i] && row.values[i].mode === fresh[i].mode){
-            reused.push(row.values[i]);
-          } else {
-            reused.push(fresh[i]);
+        const rebuilt = [];
+        let oldIndex = 0;
+        template.groups.forEach(g => {
+          for(let i = 0; i < g.count; i++){
+            const old = row.values[oldIndex];
+            if(g.type === "double"){
+              if(old && old.mode === "double") rebuilt.push(old);
+              else rebuilt.push({ mode:"double", proj:"", uppm:"" });
+            } else if(g.type === "quick"){
+              if(old && old.mode === "quick") rebuilt.push(old);
+              else rebuilt.push({ mode:"quick", value:"" });
+            } else {
+              if(old && old.mode === "single") rebuilt.push(old);
+              else rebuilt.push({ mode:"single", value:"" });
+            }
+            oldIndex++;
           }
-        }
+        });
+
         return {
           apartment: row.apartment,
-          values: reused,
+          values: rebuilt,
           note: row.note || { level:0, text:"" }
         };
       });
@@ -985,11 +1120,17 @@
         const buttons = box.querySelectorAll("button");
 
         buttons[0].onclick = () => {
+          collectUiIntoProject();
           g.count += 1;
-          rebuildRowsForTemplateChange();
+          currentProject.rows.forEach(row => {
+            if(g.type === "double") row.values.push({ mode:"double", proj:"", uppm:"" });
+            else if(g.type === "quick") row.values.push({ mode:"quick", value:"" });
+            else row.values.push({ mode:"single", value:"" });
+          });
           renderEditor();
           renderTable();
           autosave();
+          pushHistorySnapshot();
           setStatus(`${g.label}: kolumn tillagd.`);
         };
 
@@ -1001,22 +1142,48 @@
           if(!confirm(`Ta bort sista kolumnen för ${g.label}? Data i den kolumnen kan försvinna.`)){
             return;
           }
+
+          collectUiIntoProject();
+
+          // remove the last instance of this group's mode from each row
+          const targetMode = g.type;
+          currentProject.rows.forEach(row => {
+            let positions = [];
+            let cursor = 0;
+            currentProject.template.groups.forEach(group => {
+              for(let i=0; i<group.count; i++){
+                positions.push({ groupKey: group.key, index: cursor });
+                cursor++;
+              }
+            });
+            for(let i = positions.length - 1; i >= 0; i--){
+              if(positions[i].groupKey === g.key){
+                row.values.splice(positions[i].index, 1);
+                break;
+              }
+            }
+          });
+
           g.count -= 1;
-          rebuildRowsForTemplateChange();
           renderEditor();
           renderTable();
           autosave();
+          pushHistorySnapshot();
           setStatus(`${g.label}: kolumn borttagen.`);
         };
 
         if(buttons[2]){
           buttons[2].onclick = () => {
             if(!confirm(`Ändra celltyp för ${g.label}?`)) return;
+            collectUiIntoProject();
             g.type = g.type === "double" ? "single" : "double";
-            rebuildRowsForTemplateChange();
+            currentProject.rows.forEach(row => {
+              row.values = buildEmptyValueArray(currentProject.template);
+            });
             renderEditor();
             renderTable();
             autosave();
+            pushHistorySnapshot();
             setStatus(`${g.label}: celltyp ändrad.`);
           };
         }
@@ -1028,6 +1195,7 @@
     function renderTable(){
       renderHead();
       renderBody();
+      updateSelectionUi();
     }
 
     function renderHead(){
@@ -1060,6 +1228,10 @@
       return ``;
     }
 
+    function makeCellId(rowIndex, entryIndex, part){
+      return `${rowIndex}|${entryIndex}|${part}`;
+    }
+
     function renderBody(){
       const body = document.getElementById("tableBody");
       body.innerHTML = "";
@@ -1068,8 +1240,9 @@
         const tr = document.createElement("tr");
         const note = row.note || { level:0, text:"" };
 
+        const aptCellId = makeCellId(rowIndex, -1, "apt");
         let html = `
-          <td class="apt-cell">
+          <td class="apt-cell selectable-cell ${selectedCells.has(aptCellId) ? "selected-cell" : ""}" data-cell-id="${aptCellId}">
             <input class="cell-input js-apartment" value="${escapeHtml(row.apartment || "")}">
             <div style="font-size:12px; padding:0 6px 6px 6px;">${noteBadge(note.level)}</div>
           </td>
@@ -1077,28 +1250,32 @@
 
         row.values.forEach((entry, entryIndex) => {
           if(entry.mode === "double"){
+            const projId = makeCellId(rowIndex, entryIndex, "proj");
+            const uppmId = makeCellId(rowIndex, entryIndex, "uppm");
             html += `
-              <td data-entry-index="${entryIndex}" data-mode="double">
+              <td class="selectable-cell ${selectedCells.has(projId) ? "selected-cell" : ""}" data-cell-id="${projId}" data-entry-index="${entryIndex}" data-mode="double">
                 <input class="cell-input js-proj" maxlength="4" value="${escapeHtml(entry.proj || "")}">
               </td>
-              <td data-entry-index="${entryIndex}" data-mode="double">
+              <td class="selectable-cell ${selectedCells.has(uppmId) ? "selected-cell" : ""}" data-cell-id="${uppmId}" data-entry-index="${entryIndex}" data-mode="double">
                 <input class="cell-input js-uppm" maxlength="4" value="${escapeHtml(entry.uppm || "")}">
               </td>
             `;
           } else if(entry.mode === "quick"){
+            const quickId = makeCellId(rowIndex, entryIndex, "value");
             const val = entry.value || "";
             html += `
-              <td data-entry-index="${entryIndex}" data-mode="quick" data-quick-value="${escapeHtml(val)}">
+              <td class="selectable-cell ${selectedCells.has(quickId) ? "selected-cell" : ""}" data-cell-id="${quickId}" data-entry-index="${entryIndex}" data-mode="quick" data-quick-value="${escapeHtml(val)}">
                 <div class="quick-menu">
                   ${["OK","SV","IN","UK"].map(opt => `
-                    <button class="quick-btn ${val===opt ? "active" : ""}" type="button" onclick="setQuickValue(${rowIndex}, ${entryIndex}, '${opt}')">${opt}</button>
+                    <button class="quick-btn ${val===opt ? "active" : ""}" type="button" onclick="event.stopPropagation(); setQuickValue(${rowIndex}, ${entryIndex}, '${opt}')">${opt}</button>
                   `).join("")}
                 </div>
               </td>
             `;
           } else {
+            const singleId = makeCellId(rowIndex, entryIndex, "value");
             html += `
-              <td data-entry-index="${entryIndex}" data-mode="single">
+              <td class="selectable-cell ${selectedCells.has(singleId) ? "selected-cell" : ""}" data-cell-id="${singleId}" data-entry-index="${entryIndex}" data-mode="single">
                 <input class="cell-input js-single" maxlength="4" value="${escapeHtml(entry.value || "")}">
               </td>
             `;
@@ -1109,7 +1286,7 @@
 
         html += `
           <td>
-            <button class="note-btn ${noteClass}" type="button" onclick="openNoteModal(${rowIndex})">
+            <button class="note-btn ${noteClass}" type="button" onclick="event.stopPropagation(); openNoteModal(${rowIndex})">
               ${note.text ? "📝 " + (note.level === 1 ? "*" : note.level === 2 ? "**" : "") : "📝"}
             </button>
           </td>
@@ -1119,19 +1296,128 @@
         body.appendChild(tr);
       });
 
-      bindTableAutosave();
+      bindTableInputs();
+      bindSelectableCells();
     }
 
-    function bindTableAutosave(){
+    function bindTableInputs(){
       document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = autosave;
+        i.oninput = () => { autosave(); scheduleHistoryCommit(); };
+        i.onclick = e => e.stopPropagation();
       });
+    }
+
+    function bindSelectableCells(){
+      document.querySelectorAll(".selectable-cell").forEach(td => {
+        td.addEventListener("click", (e) => {
+          const isMulti = e.ctrlKey || e.metaKey || selectionMode;
+          if(isMulti){
+            e.preventDefault();
+            toggleCellSelection(td.dataset.cellId);
+          }
+        });
+
+        td.addEventListener("touchstart", () => {
+          longPressTimer = setTimeout(() => {
+            selectionMode = true;
+            toggleCellSelection(td.dataset.cellId);
+          }, 450);
+        }, { passive:true });
+
+        td.addEventListener("touchend", () => clearTimeout(longPressTimer), { passive:true });
+        td.addEventListener("touchmove", () => clearTimeout(longPressTimer), { passive:true });
+      });
+    }
+
+    function toggleCellSelection(cellId){
+      if(selectedCells.has(cellId)) selectedCells.delete(cellId);
+      else selectedCells.add(cellId);
+      renderBody();
+      updateSelectionUi();
+    }
+
+    function clearSelection(){
+      selectedCells.clear();
+      selectionMode = false;
+      renderBody();
+      updateSelectionUi();
+    }
+
+    function updateSelectionUi(){
+      const count = selectedCells.size;
+      const badge = document.getElementById("selectionBadge");
+      const fillBtn = document.getElementById("fillSelectedBtn");
+      const clearBtn = document.getElementById("clearSelectedBtn");
+      const cancelBtn = document.getElementById("cancelSelectedBtn");
+
+      badge.textContent = `${count} markerade`;
+      badge.classList.toggle("hidden", count === 0);
+      fillBtn.classList.toggle("hidden", count === 0);
+      clearBtn.classList.toggle("hidden", count === 0);
+      cancelBtn.classList.toggle("hidden", count === 0);
+    }
+
+    function fillSelectedCells(){
+      if(!selectedCells.size) return;
+      const value = prompt("Ange värde att fylla i markerade celler:");
+      if(value === null) return;
+
+      collectUiIntoProject();
+
+      for(const id of selectedCells){
+        applyValueToCellId(id, value);
+      }
+
+      renderBody();
+      autosave();
+      pushHistorySnapshot();
+      setStatus("Markerade celler fyllda.");
+    }
+
+    function clearSelectedCells(){
+      if(!selectedCells.size) return;
+      if(!confirm("Rensa markerade celler?")) return;
+
+      collectUiIntoProject();
+
+      for(const id of selectedCells){
+        applyValueToCellId(id, "");
+      }
+
+      renderBody();
+      autosave();
+      pushHistorySnapshot();
+      setStatus("Markerade celler rensade.");
+    }
+
+    function applyValueToCellId(id, value){
+      const [rowIndexStr, entryIndexStr, part] = id.split("|");
+      const rowIndex = Number(rowIndexStr);
+      const entryIndex = Number(entryIndexStr);
+      const row = currentProject.rows[rowIndex];
+      if(!row) return;
+
+      if(part === "apt"){
+        row.apartment = value;
+        return;
+      }
+
+      const entry = row.values[entryIndex];
+      if(!entry) return;
+
+      if(entry.mode === "double"){
+        if(part === "proj") entry.proj = value;
+        if(part === "uppm") entry.uppm = value;
+      } else {
+        entry.value = value;
+      }
     }
 
     function setQuickValue(rowIndex, entryIndex, value){
       currentProject.rows[rowIndex].values[entryIndex].value = value;
       renderBody();
       autosave();
+      pushHistorySnapshot();
     }
 
     function openNoteModal(rowIndex){
@@ -1181,6 +1467,7 @@
       closeNoteModal();
       renderBody();
       autosave();
+      pushHistorySnapshot();
       setStatus("Notering sparad.");
     }
 
@@ -1192,6 +1479,7 @@
       });
       renderBody();
       autosave();
+      pushHistorySnapshot();
       setStatus("Rad tillagd.");
     }
 
@@ -1204,6 +1492,7 @@
       currentProject.rows.pop();
       renderBody();
       autosave();
+      pushHistorySnapshot();
       setStatus("Sista raden borttagen.");
     }
 
@@ -1269,7 +1558,6 @@
         }
 
         const img = new Image();
-        img.crossOrigin = "anonymous";
         img.onload = function(){
           try{
             const canvas = document.createElement("canvas");
@@ -1283,10 +1571,8 @@
             resolve(null);
           }
         };
-        img.onerror = function(){
-          resolve(null);
-        };
-        img.src = "logo.png";
+        img.onerror = function(){ resolve(null); };
+        img.src = "./logo.png";
       });
     }
 
@@ -1418,6 +1704,7 @@
 
       currentProject.exportCount = (currentProject.exportCount || 0) + 1;
       saveCurrentProject();
+      pushHistorySnapshot();
       setStatus(`PDF exporterad: ${fileName}`);
     }
 
@@ -1431,7 +1718,7 @@
         const found = projects.find(p => p.id === lastId);
         if(found){
           currentProject = found;
-          openCurrentProject();
+          openCurrentProject(true);
         }
       }
     }
