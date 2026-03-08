@@ -886,59 +886,75 @@
     }
 
     function renderEditor(){
-      const wrap = document.getElementById("editorControls");
-      wrap.innerHTML = "";
+  const wrap = document.getElementById("editorControls");
+  wrap.innerHTML = "";
 
-      currentProject.template.groups.forEach((g) => {
-        const box = document.createElement("div");
-        box.style.border = "1px solid #b8b0a6";
-        box.style.padding = "10px";
-        box.style.background = "#fff";
-        box.innerHTML = `
-          <strong>${escapeHtml(g.label)}</strong>
-          <div class="muted" style="margin:6px 0 8px 0;">
-            Typ: ${g.type === "double" ? "Proj/Uppm" : g.type === "quick" ? "Snabbval" : "Enkel"}
-          </div>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="small-btn" type="button">Lägg till</button>
-            <button class="small-btn" type="button">Ta bort</button>
-          </div>
-        `;
+  currentProject.template.groups.forEach((g) => {
+    const box = document.createElement("div");
+    box.style.border = "1px solid #b8b0a6";
+    box.style.padding = "10px";
+    box.style.background = "#fff";
+    box.style.minWidth = "220px";
 
-        const buttons = box.querySelectorAll("button");
+    box.innerHTML = `
+      <label style="display:block; font-size:11px; font-weight:700; margin-bottom:6px;">
+        Rumsnamn
+      </label>
+      <input class="group-label-input" type="text" value="${escapeHtml(g.label)}" style="margin-bottom:8px;" />
 
-        buttons[0].onclick = () => {
-          autosaveNow();
-          g.count += 1;
-          currentProject.rows.forEach(row => {
-            if(g.type === "double") row.values.push({ mode:"double", proj:"", uppm:"" });
-            else if(g.type === "quick") row.values.push({ mode:"quick", value:"" });
-            else row.values.push({ mode:"single", value:"" });
-          });
-          renderEditor();
-          renderTable();
-          autosaveNow();
-          setStatus(`${g.label}: kolumn tillagd.`);
-        };
+      <div class="muted" style="margin:6px 0 8px 0;">
+        Typ: ${g.type === "double" ? "Proj/Uppm" : g.type === "quick" ? "Snabbval" : "Enkel"}
+      </div>
 
-        buttons[1].onclick = () => {
-          if(g.count <= 1){
-            setStatus(`${g.label}: minst en måste finnas kvar.`);
-            return;
-          }
-          if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
-          autosaveNow();
-          currentProject.rows.forEach(row => row.values.pop());
-          g.count -= 1;
-          renderEditor();
-          renderTable();
-          autosaveNow();
-          setStatus(`${g.label}: kolumn borttagen.`);
-        };
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="small-btn" type="button">Lägg till</button>
+        <button class="small-btn" type="button">Ta bort</button>
+      </div>
+    `;
 
-        wrap.appendChild(box);
+    const labelInput = box.querySelector(".group-label-input");
+    const buttons = box.querySelectorAll("button");
+
+    labelInput.addEventListener("input", () => {
+      g.label = labelInput.value.trim() || "Namnlös";
+      renderHead();
+      autosaveNow();
+      setStatus("Rumsnamn uppdaterat.");
+    });
+
+    buttons[0].onclick = () => {
+      autosaveNow();
+      g.count += 1;
+      currentProject.rows.forEach(row => {
+        if(g.type === "double") row.values.push({ mode:"double", proj:"", uppm:"" });
+        else if(g.type === "quick") row.values.push({ mode:"quick", value:"" });
+        else row.values.push({ mode:"single", value:"" });
       });
-    }
+      renderEditor();
+      renderTable();
+      autosaveNow();
+      setStatus(`${g.label}: kolumn tillagd.`);
+    };
+
+    buttons[1].onclick = () => {
+      if(g.count <= 1){
+        setStatus(`${g.label}: minst en måste finnas kvar.`);
+        return;
+      }
+      if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
+
+      autosaveNow();
+      currentProject.rows.forEach(row => row.values.pop());
+      g.count -= 1;
+      renderEditor();
+      renderTable();
+      autosaveNow();
+      setStatus(`${g.label}: kolumn borttagen.`);
+    };
+
+    wrap.appendChild(box);
+  });
+}
 
     function renderHead(){
       const head = document.getElementById("tableHead");
