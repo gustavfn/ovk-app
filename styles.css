@@ -9,24 +9,19 @@
   --text:#20262c;
   --dark:#2f2f2f;
   --sub:#f1ebe3;
-  --sub-2:#ebe2d6;
-  --row-alt:#fcfaf7;
+  --row-alt:#f8f6f3;
   --row-focus:#fff8ef;
   --yellow:#d8a100;
   --red:#c62828;
 
-  --head-row-1-height:38px;
+  --head-row-1-height:40px;
   --head-row-2-height:34px;
-  --sticky-left-width:86px;
-  --note-col-width:68px;
+  --sticky-left-width:88px;
+  --note-col-width:64px;
 }
 
 *{
   box-sizing:border-box;
-}
-
-html{
-  scroll-behavior:auto;
 }
 
 body{
@@ -219,9 +214,7 @@ textarea{
 .mt-18{ margin-top:18px; }
 .mb-10{ margin-bottom:10px; }
 
-/* =========================
-   TABELL – BALANSERAD VERSION
-   ========================= */
+/* ===== PDF-LIK TABELL ===== */
 
 .table-wrap{
   position:relative;
@@ -246,20 +239,20 @@ table{
 
 /* Header */
 thead th{
-  border:1px solid var(--line);
-  padding:3px 4px;
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  padding:4px 4px;
   text-align:center;
   font-size:12px;
   line-height:1.1;
   white-space:normal;
   word-break:break-word;
   overflow-wrap:anywhere;
-  background-clip:padding-box;
   position:sticky;
 }
 
 thead tr.main-head th{
-  background:#2d2d2d;
+  background:#2f2f2f;
   color:#fff;
   top:0;
   z-index:60;
@@ -267,16 +260,15 @@ thead tr.main-head th{
 }
 
 thead tr.sub-head th{
-  background:linear-gradient(180deg,var(--sub) 0%, var(--sub-2) 100%);
+  background:var(--sub);
   color:#111;
   top:var(--head-row-1-height);
   z-index:59;
   min-height:var(--head-row-2-height);
   font-size:11px;
-  padding:2px 4px;
+  font-weight:700;
 }
 
-/* Lägenhetsheader */
 thead tr.main-head th:first-child{
   left:0;
   z-index:90;
@@ -286,7 +278,6 @@ thead tr.main-head th:first-child{
   box-shadow:2px 0 0 var(--line-strong);
 }
 
-/* Noteringsheader */
 #protocolTable thead th:last-child{
   width:var(--note-col-width);
   min-width:var(--note-col-width);
@@ -295,18 +286,18 @@ thead tr.main-head th:first-child{
 
 /* Body */
 tbody td{
-  border:1px solid var(--line-soft);
+  border-right:1px solid var(--line-soft);
+  border-bottom:1px solid var(--line-soft);
   padding:0;
   background:#fff;
   vertical-align:middle;
-  background-clip:padding-box;
 }
 
 tbody tr:nth-child(even) td{
   background:var(--row-alt);
 }
 
-/* Sticky lägenhetskolumn */
+/* Sticky apartment column */
 .apt-cell{
   background:#f8efe3 !important;
   font-weight:700;
@@ -319,37 +310,37 @@ tbody tr:nth-child(even) td{
   box-shadow:2px 0 0 var(--line-strong);
 }
 
-/* Noteringskolumn */
 #protocolTable tbody td:last-child{
   width:var(--note-col-width);
   min-width:var(--note-col-width);
   max-width:var(--note-col-width);
 }
 
-/* Snygg rumsavgränsning */
+/* Tydlig rumsavgränsning */
 .room-divider{
   border-right:2px solid var(--line-strong) !important;
 }
 
-/* Aktiv rad */
+/* Diskret aktiv rad */
 tbody tr:focus-within td{
   background:var(--row-focus);
 }
 
 tbody tr:focus-within .apt-cell{
-  background:#f4e5d3 !important;
+  background:#f2e2cf !important;
 }
 
-/* Inputs */
+/* Inputs ska se ut som protokollceller, inte webbformulär */
 .cell-input{
   width:100%;
-  min-height:30px;
+  min-height:32px;
   border:none;
   background:transparent;
-  padding:5px 4px;
+  padding:6px 4px;
   font-size:12px;
   outline:none;
   text-align:center;
+  font-family:Arial, Helvetica, sans-serif;
 }
 
 .cell-input.left{
@@ -358,14 +349,18 @@ tbody tr:focus-within .apt-cell{
 
 .cell-input:focus{
   background:#fff7ea;
-  outline:1px solid rgba(224,172,0,.45);
-  outline-offset:-1px;
+  box-shadow:inset 0 0 0 1px rgba(224,172,0,.55);
 }
 
-/* Notering */
+/* Lägenhetsnummer lite tydligare */
+.js-apartment{
+  font-weight:700;
+}
+
+/* Noteringsknapp mer neutral, mer som PDF-indikator */
 .note-btn{
   width:100%;
-  min-height:30px;
+  min-height:32px;
   border:none;
   background:transparent;
   font-weight:700;
@@ -377,6 +372,30 @@ tbody tr:focus-within .apt-cell{
 .note-btn.empty{ color:#666; }
 .note-btn.level-1{ color:var(--yellow); }
 .note-btn.level-2{ color:var(--red); }
+
+/* Snabbval görs mer protokoll-lika och mindre knappiga */
+.quick-menu{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:1px;
+  padding:1px;
+}
+
+.quick-btn{
+  border:1px solid transparent;
+  background:transparent;
+  min-height:30px;
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+  padding:2px;
+}
+
+.quick-btn.active{
+  background:#f0c94f;
+  color:#111;
+  border-color:#caa032;
+}
 
 /* Footer */
 .footer-grid{
@@ -479,30 +498,6 @@ tbody tr:focus-within .apt-cell{
   color:#333;
 }
 
-/* Snabbknappar */
-.quick-menu{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:2px;
-  padding:2px;
-}
-
-.quick-btn{
-  border:1px solid transparent;
-  background:transparent;
-  min-height:26px;
-  font-size:10px;
-  font-weight:700;
-  cursor:pointer;
-  padding:2px;
-}
-
-.quick-btn.active{
-  background:var(--orange);
-  color:#fff;
-  border-color:#a77b00;
-}
-
 @media (max-width:1100px){
   .grid-3,
   .grid-2,
@@ -526,29 +521,9 @@ tbody tr:focus-within .apt-cell{
   }
 
   :root{
-    --sticky-left-width:78px;
-    --note-col-width:60px;
+    --sticky-left-width:80px;
+    --note-col-width:58px;
     --head-row-1-height:36px;
     --head-row-2-height:32px;
-  }
-
-  thead th{
-    font-size:11px;
-  }
-
-  thead tr.sub-head th{
-    font-size:10px;
-  }
-
-  .cell-input{
-    font-size:11px;
-  }
-
-  .note-btn{
-    font-size:11px;
-  }
-
-  .quick-btn{
-    font-size:9px;
   }
 }
