@@ -12,9 +12,10 @@
   --yellow:#d8a100;
   --red:#c62828;
 
-  --head-row-1-height: 40px;
-  --head-row-2-height: 38px;
-  --sticky-left-width: 110px;
+  --head-row-1-height:34px;
+  --head-row-2-height:32px;
+  --sticky-left-width:90px;
+  --note-col-width:72px;
 }
 
 *{
@@ -209,7 +210,6 @@ textarea{
   font-size:13px;
 }
 
-/* Enkel utility som din HTML redan använder */
 .mt-8{ margin-top:8px; }
 .mt-12{ margin-top:12px; }
 .mt-14{ margin-top:14px; }
@@ -223,32 +223,36 @@ textarea{
 .table-wrap{
   position:relative;
   overflow-x:auto;
-  overflow-y:clip; /* viktigt: ingen vertikal scroll-container här */
+  overflow-y:clip;
   border:1px solid var(--line);
   background:#fff;
   -webkit-overflow-scrolling:touch;
 }
 
 table{
-  width:max-content;
-  min-width:100%;
+  width:100%;
+  min-width:0;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
 }
 
-/* Header-celler */
+#protocolTable th,
+#protocolTable td{
+  min-width:0;
+}
+
 thead th{
   border:1px solid var(--line);
-  padding:0 8px;
+  padding:0 4px;
   text-align:center;
-  font-size:13px;
+  font-size:12px;
   white-space:nowrap;
   background-clip:padding-box;
   position:sticky;
+  line-height:1.1;
 }
 
-/* Övre header-rad */
 thead tr.main-head th{
   background:#2d2d2d;
   color:#fff;
@@ -258,7 +262,6 @@ thead tr.main-head th{
   min-height:var(--head-row-1-height);
 }
 
-/* Undre header-rad */
 thead tr.sub-head th{
   background:var(--sub);
   color:#111;
@@ -268,11 +271,13 @@ thead tr.sub-head th{
   min-height:var(--head-row-2-height);
 }
 
-/* Första headercellen (Lägenhet) */
+/* Sticky första kolumnen i header */
 thead tr.main-head th:first-child{
   left:0;
   z-index:90;
+  width:var(--sticky-left-width);
   min-width:var(--sticky-left-width);
+  max-width:var(--sticky-left-width);
   box-shadow:2px 0 0 var(--line);
 }
 
@@ -296,8 +301,23 @@ tbody tr:nth-child(even) td{
   position:sticky;
   left:0;
   z-index:40;
+  width:var(--sticky-left-width);
   min-width:var(--sticky-left-width);
+  max-width:var(--sticky-left-width);
   box-shadow:2px 0 0 var(--line);
+}
+
+/* Noteringskolumn kompakt */
+#protocolTable thead th:last-child{
+  width:var(--note-col-width);
+  min-width:var(--note-col-width);
+  max-width:var(--note-col-width);
+}
+
+#protocolTable tbody td:last-child{
+  width:var(--note-col-width);
+  min-width:var(--note-col-width);
+  max-width:var(--note-col-width);
 }
 
 /* Aktiv rad */
@@ -312,11 +332,11 @@ tbody tr:focus-within .apt-cell{
 /* Inputs i celler */
 .cell-input{
   width:100%;
-  min-height:34px;
+  min-height:30px;
   border:none;
   background:transparent;
-  padding:8px 6px;
-  font-size:13px;
+  padding:5px 4px;
+  font-size:12px;
   outline:none;
   text-align:center;
 }
@@ -334,11 +354,13 @@ tbody tr:focus-within .apt-cell{
 /* Noteringsknapp */
 .note-btn{
   width:100%;
-  min-height:34px;
+  min-height:30px;
   border:none;
   background:transparent;
   font-weight:700;
   cursor:pointer;
+  font-size:12px;
+  padding:4px 2px;
 }
 
 .note-btn.empty{ color:#666; }
@@ -450,17 +472,18 @@ tbody tr:focus-within .apt-cell{
 .quick-menu{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:4px;
-  padding:4px;
+  gap:2px;
+  padding:2px;
 }
 
 .quick-btn{
   border:1px solid transparent;
   background:transparent;
-  min-height:34px;
-  font-size:12px;
+  min-height:28px;
+  font-size:11px;
   font-weight:700;
   cursor:pointer;
+  padding:2px;
 }
 
 .quick-btn.active{
@@ -493,8 +516,19 @@ tbody tr:focus-within .apt-cell{
   }
 
   :root{
-    --sticky-left-width: 92px;
-    --head-row-1-height: 38px;
-    --head-row-2-height: 36px;
+    --sticky-left-width:82px;
+    --note-col-width:64px;
+    --head-row-1-height:32px;
+    --head-row-2-height:30px;
+  }
+
+  thead th{
+    font-size:11px;
+    padding:0 3px;
+  }
+
+  .cell-input{
+    font-size:11px;
+    padding:4px 3px;
   }
 }
