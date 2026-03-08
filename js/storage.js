@@ -160,7 +160,10 @@
   };
 
   App.collectUiIntoProject = function(){
-    if(!App.currentProject) return;
+  if(!App.currentProject) return;
+
+  const table = document.getElementById("tableBody");
+  if(!table) return;
 
     const titleEl = document.getElementById("projectTitle");
     const dateEl = document.getElementById("dateField");
@@ -222,13 +225,20 @@
   };
 
   App.scheduleAutosave = function(){
-    if(!App.currentProject) return;
-    window.clearTimeout(App.autosaveTimer);
-    App.autosaveTimer = window.setTimeout(() => {
-      App.flushAutosave(false);
-      App.setStatus("Autosparat.");
-    }, App.AUTOSAVE_DELAY);
-  };
+  if(!App.currentProject) return;
+
+  const now = Date.now();
+
+  // undvik autosave spam
+  if(now - App.lastSavedAt < 300) return;
+
+  window.clearTimeout(App.autosaveTimer);
+
+  App.autosaveTimer = window.setTimeout(() => {
+    App.flushAutosave(false);
+    App.setStatus("Autosparat.");
+  }, App.AUTOSAVE_DELAY);
+};
 
   window.downloadBackup = function(){
     if(!App.currentProject){
