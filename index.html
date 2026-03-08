@@ -22,8 +22,6 @@
       --row-alt:#fcfaf7;
       --yellow:#d8a100;
       --red:#c62828;
-      --blue:#2f6fed;
-      --blue-soft:#dcebff;
     }
 
     * { box-sizing: border-box; }
@@ -147,11 +145,6 @@
       font-size:14px;
     }
 
-    .sys-btn:hover{
-      background:#fff6eb;
-      border-color:var(--orange);
-    }
-
     .sys-btn.active{
       background:linear-gradient(180deg, var(--light-orange) 0%, var(--orange) 100%);
       color:#fff;
@@ -170,7 +163,6 @@
       font-weight:700;
       cursor:pointer;
       font-size:14px;
-      user-select:none;
     }
 
     .btn, .small-btn{
@@ -178,11 +170,6 @@
       border:1px solid var(--line);
       background:#fff;
       color:#111;
-    }
-
-    .btn:hover, .small-btn:hover{
-      background:#fff6eb;
-      border-color:var(--orange);
     }
 
     .btn-primary{
@@ -207,17 +194,6 @@
       align-items:center;
     }
 
-    .toolbar.spaced{
-      justify-content:space-between;
-    }
-
-    .toolbar-left, .toolbar-right{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
     .table-wrap{
       overflow:auto;
       border:1px solid var(--line);
@@ -226,7 +202,7 @@
 
     table{
       width:100%;
-      min-width:1700px;
+      min-width:1500px;
       border-collapse:collapse;
       table-layout:fixed;
     }
@@ -260,7 +236,6 @@
       padding:0;
       background:#fff;
       vertical-align:middle;
-      position:relative;
     }
 
     tbody tr:nth-child(even) td{
@@ -287,10 +262,6 @@
       text-align:left;
     }
 
-    .cell-input:focus{
-      background:#fff7ef;
-    }
-
     .note-btn{
       width:100%;
       min-height:34px;
@@ -300,10 +271,7 @@
       cursor:pointer;
     }
 
-    .note-btn.empty{
-      color:#666;
-    }
-
+    .note-btn.empty{ color:#666; }
     .note-btn.level-1{ color:var(--yellow); }
     .note-btn.level-2{ color:var(--red); }
 
@@ -426,36 +394,10 @@
       cursor:pointer;
     }
 
-    .quick-btn:hover{
-      background:#fff3e6;
-      border-color:#ffd7ad;
-    }
-
     .quick-btn.active{
       background:var(--orange);
       color:#fff;
       border-color:#a77b00;
-    }
-
-    .selected-cell{
-      outline:2px solid var(--blue);
-      outline-offset:-2px;
-      background:var(--blue-soft) !important;
-    }
-
-    .selection-badge{
-      font-size:12px;
-      padding:4px 8px;
-      border:1px solid var(--blue);
-      background:var(--blue-soft);
-      color:#1847a3;
-      font-weight:700;
-    }
-
-    .history-btn{
-      min-width:42px;
-      text-align:center;
-      padding:11px 12px;
     }
 
     @media (max-width:1100px){
@@ -471,13 +413,6 @@
       }
       .brandmark{
         height:54px;
-      }
-      .toolbar.spaced{
-        flex-direction:column;
-        align-items:flex-start;
-      }
-      .toolbar-left, .toolbar-right{
-        width:100%;
       }
     }
   </style>
@@ -554,22 +489,6 @@
         </div>
       </div>
 
-      <div class="panel">
-        <div class="toolbar spaced">
-          <div class="toolbar-left">
-            <button class="btn history-btn" onclick="undoHistory()" title="Ångra">↶</button>
-            <button class="btn history-btn" onclick="redoHistory()" title="Gör om">↷</button>
-            <span id="selectionBadge" class="selection-badge hidden">0 markerade</span>
-            <button id="fillSelectedBtn" class="btn hidden" onclick="fillSelectedCells()">Fyll markerade</button>
-            <button id="clearSelectedBtn" class="btn hidden" onclick="clearSelectedCells()">Rensa markerade</button>
-            <button id="cancelSelectedBtn" class="btn hidden" onclick="clearSelection()">Avmarkera</button>
-          </div>
-          <div class="toolbar-right">
-            <span class="muted">Ctrl/Cmd + klick på dator. Långtryck på mobil.</span>
-          </div>
-        </div>
-      </div>
-
       <div id="editorPanel" class="panel">
         <h3>Redigering av mall</h3>
         <div id="editorControls" class="toolbar"></div>
@@ -636,9 +555,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_projects_stable_v1";
-    const APP_STATE_KEY = "ovk_app_current_project_id_stable_v1";
-    const HISTORY_LIMIT = 50;
+    const STORAGE_KEY = "ovk_app_minimal_stable_v1";
+    const APP_STATE_KEY = "ovk_app_current_project_id_minimal_stable_v1";
 
     const templates = {
       "självdrag": {
@@ -690,11 +608,6 @@
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
     let cachedLogoDataUrl = null;
-    let historyStack = [];
-    let historyIndex = -1;
-    let selectedCells = new Set();
-    let selectionMode = false;
-    let longPressTimer = null;
 
     function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
     function uid(){ return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9); }
@@ -876,56 +789,6 @@
       saveCurrentProject();
     }
 
-    function snapshotNow(force = false){
-      if(!currentProject) return;
-      collectUiIntoProject();
-      const snap = JSON.stringify(currentProject);
-      if(!force && historyIndex >= 0 && historyStack[historyIndex] === snap) return;
-
-      if(historyIndex < historyStack.length - 1){
-        historyStack = historyStack.slice(0, historyIndex + 1);
-      }
-
-      historyStack.push(snap);
-      if(historyStack.length > HISTORY_LIMIT){
-        historyStack.shift();
-      }
-      historyIndex = historyStack.length - 1;
-    }
-
-    function resetHistory(){
-      historyStack = [];
-      historyIndex = -1;
-      snapshotNow(true);
-    }
-
-    function undoHistory(){
-      if(historyIndex <= 0){
-        setStatus("Inget mer att ångra.");
-        return;
-      }
-      historyIndex -= 1;
-      currentProject = JSON.parse(historyStack[historyIndex]);
-      openCurrentProject(false);
-      setStatus("Ångrade senaste ändringen.");
-    }
-
-    function redoHistory(){
-      if(historyIndex >= historyStack.length - 1){
-        setStatus("Inget mer att göra om.");
-        return;
-      }
-      historyIndex += 1;
-      currentProject = JSON.parse(historyStack[historyIndex]);
-      openCurrentProject(false);
-      setStatus("Gjorde om ändringen.");
-    }
-
-    function scheduleSnapshot(){
-      clearTimeout(window.__snapshotTimer);
-      window.__snapshotTimer = setTimeout(() => snapshotNow(false), 350);
-    }
-
     function createNewProject(){
       const projectName = document.getElementById("startProjectName").value.trim();
       const documentTitle = document.getElementById("startDocumentTitle").value.trim();
@@ -951,7 +814,7 @@
       };
 
       saveCurrentProject();
-      openCurrentProject(true);
+      openCurrentProject();
     }
 
     function loadProject(id){
@@ -960,7 +823,7 @@
       if(!found) return;
       currentProject = clone(found);
       setCurrentProjectId(currentProject.id);
-      openCurrentProject(true);
+      openCurrentProject();
     }
 
     function deleteProject(id){
@@ -972,7 +835,7 @@
       renderSavedProjects();
     }
 
-    function openCurrentProject(resetHistoryFlag = false){
+    function openCurrentProject(){
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("workScreen").classList.remove("hidden");
 
@@ -984,16 +847,13 @@
       document.getElementById("methodField").value = currentProject.method || "";
       document.getElementById("performedByField").value = currentProject.performedBy || "";
 
-      document.getElementById("projectTitle").oninput = () => { autosaveNow(); scheduleSnapshot(); };
-      document.getElementById("dateField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
-      document.getElementById("methodField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
-      document.getElementById("performedByField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
+      document.getElementById("projectTitle").oninput = autosaveNow;
+      document.getElementById("dateField").oninput = autosaveNow;
+      document.getElementById("methodField").oninput = autosaveNow;
+      document.getElementById("performedByField").oninput = autosaveNow;
 
-      clearSelection(false);
       renderEditor();
       renderTable();
-
-      if(resetHistoryFlag) resetHistory();
       setStatus("Projekt öppnat.");
     }
 
@@ -1038,7 +898,6 @@
           renderEditor();
           renderTable();
           autosaveNow();
-          snapshotNow();
           setStatus(`${g.label}: kolumn tillagd.`);
         };
 
@@ -1048,27 +907,17 @@
             return;
           }
           if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
-
           autosaveNow();
-          currentProject.rows.forEach(row => {
-            row.values.pop();
-          });
+          currentProject.rows.forEach(row => row.values.pop());
           g.count -= 1;
           renderEditor();
           renderTable();
           autosaveNow();
-          snapshotNow();
           setStatus(`${g.label}: kolumn borttagen.`);
         };
 
         wrap.appendChild(box);
       });
-    }
-
-    function renderTable(){
-      renderHead();
-      renderBody();
-      updateSelectionUi();
     }
 
     function renderHead(){
@@ -1101,10 +950,6 @@
       return ``;
     }
 
-    function makeCellId(rowIndex, entryIndex, part){
-      return `${rowIndex}|${entryIndex}|${part}`;
-    }
-
     function renderBody(){
       const body = document.getElementById("tableBody");
       body.innerHTML = "";
@@ -1113,9 +958,8 @@
         const tr = document.createElement("tr");
         const note = row.note || { level:0, text:"" };
 
-        const aptCellId = makeCellId(rowIndex, -1, "apt");
         let html = `
-          <td class="apt-cell selectable-cell ${selectedCells.has(aptCellId) ? "selected-cell" : ""}" data-cell-id="${aptCellId}">
+          <td class="apt-cell">
             <input class="cell-input js-apartment" data-nav-col="0" data-row-index="${rowIndex}" value="${escapeHtml(row.apartment || "")}">
             <div style="font-size:12px; padding:0 6px 6px 6px;">${noteBadge(note.level)}</div>
           </td>
@@ -1125,33 +969,28 @@
 
         row.values.forEach((entry, entryIndex) => {
           if(entry.mode === "double"){
-            const projId = makeCellId(rowIndex, entryIndex, "proj");
-            const uppmId = makeCellId(rowIndex, entryIndex, "uppm");
-
             html += `
-              <td class="selectable-cell ${selectedCells.has(projId) ? "selected-cell" : ""}" data-cell-id="${projId}" data-entry-index="${entryIndex}" data-mode="double">
+              <td data-entry-index="${entryIndex}" data-mode="double">
                 <input class="cell-input js-proj" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.proj || "")}">
               </td>
-              <td class="selectable-cell ${selectedCells.has(uppmId) ? "selected-cell" : ""}" data-cell-id="${uppmId}" data-entry-index="${entryIndex}" data-mode="double">
+              <td data-entry-index="${entryIndex}" data-mode="double">
                 <input class="cell-input js-uppm" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.uppm || "")}">
               </td>
             `;
           } else if(entry.mode === "quick"){
-            const quickId = makeCellId(rowIndex, entryIndex, "value");
             const val = entry.value || "";
             html += `
-              <td class="selectable-cell ${selectedCells.has(quickId) ? "selected-cell" : ""}" data-cell-id="${quickId}" data-entry-index="${entryIndex}" data-mode="quick" data-quick-value="${escapeHtml(val)}">
+              <td data-entry-index="${entryIndex}" data-mode="quick" data-quick-value="${escapeHtml(val)}">
                 <div class="quick-menu">
                   ${["OK","SV","IN","UK"].map(opt => `
-                    <button class="quick-btn ${val===opt ? "active" : ""}" type="button" onclick="event.stopPropagation(); setQuickValue(${rowIndex}, ${entryIndex}, '${opt}')">${opt}</button>
+                    <button class="quick-btn ${val===opt ? "active" : ""}" type="button" onclick="setQuickValue(${rowIndex}, ${entryIndex}, '${opt}')">${opt}</button>
                   `).join("")}
                 </div>
               </td>
             `;
           } else {
-            const singleId = makeCellId(rowIndex, entryIndex, "value");
             html += `
-              <td class="selectable-cell ${selectedCells.has(singleId) ? "selected-cell" : ""}" data-cell-id="${singleId}" data-entry-index="${entryIndex}" data-mode="single">
+              <td data-entry-index="${entryIndex}" data-mode="single">
                 <input class="cell-input js-single" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.value || "")}">
               </td>
             `;
@@ -1159,9 +998,10 @@
         });
 
         const noteClass = note.level === 2 ? "level-2" : note.level === 1 ? "level-1" : "empty";
+
         html += `
           <td>
-            <button class="note-btn ${noteClass}" type="button" onclick="event.stopPropagation(); openNoteModal(${rowIndex})">
+            <button class="note-btn ${noteClass}" type="button" onclick="openNoteModal(${rowIndex})">
               ${note.text ? "📝 " + (note.level === 1 ? "*" : note.level === 2 ? "**" : "") : "📝"}
             </button>
           </td>
@@ -1172,13 +1012,16 @@
       });
 
       bindTableInputs();
-      bindSelectableCells();
+    }
+
+    function renderTable(){
+      renderHead();
+      renderBody();
     }
 
     function bindTableInputs(){
       document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = () => { autosaveNow(); scheduleSnapshot(); };
-        i.onclick = e => e.stopPropagation();
+        i.oninput = autosaveNow;
         i.onkeydown = handleInputKeydown;
       });
     }
@@ -1193,107 +1036,10 @@
       }
     }
 
-    function bindSelectableCells(){
-      document.querySelectorAll(".selectable-cell").forEach(td => {
-        td.addEventListener("click", (e) => {
-          const multi = e.ctrlKey || e.metaKey || selectionMode;
-          if(!multi) return;
-          e.preventDefault();
-          e.stopPropagation();
-          toggleCellSelection(td.dataset.cellId);
-        });
-
-        td.addEventListener("touchstart", () => {
-          clearTimeout(longPressTimer);
-          longPressTimer = setTimeout(() => {
-            selectionMode = true;
-            toggleCellSelection(td.dataset.cellId);
-          }, 450);
-        }, { passive:true });
-
-        td.addEventListener("touchend", () => clearTimeout(longPressTimer), { passive:true });
-        td.addEventListener("touchmove", () => clearTimeout(longPressTimer), { passive:true });
-      });
-    }
-
-    function toggleCellSelection(cellId){
-      if(selectedCells.has(cellId)) selectedCells.delete(cellId);
-      else selectedCells.add(cellId);
-      renderBody();
-      updateSelectionUi();
-    }
-
-    function clearSelection(rerender = true){
-      selectedCells.clear();
-      selectionMode = false;
-      if(rerender) renderBody();
-      updateSelectionUi();
-    }
-
-    function updateSelectionUi(){
-      const count = selectedCells.size;
-      document.getElementById("selectionBadge").textContent = `${count} markerade`;
-      document.getElementById("selectionBadge").classList.toggle("hidden", count === 0);
-      document.getElementById("fillSelectedBtn").classList.toggle("hidden", count === 0);
-      document.getElementById("clearSelectedBtn").classList.toggle("hidden", count === 0);
-      document.getElementById("cancelSelectedBtn").classList.toggle("hidden", count === 0);
-    }
-
-    function applyValueToCellId(id, value){
-      const [rowIndexStr, entryIndexStr, part] = id.split("|");
-      const rowIndex = Number(rowIndexStr);
-      const entryIndex = Number(entryIndexStr);
-      const row = currentProject.rows[rowIndex];
-      if(!row) return;
-
-      if(part === "apt"){
-        row.apartment = value;
-        return;
-      }
-
-      const entry = row.values[entryIndex];
-      if(!entry) return;
-
-      if(entry.mode === "double"){
-        if(part === "proj") entry.proj = value;
-        if(part === "uppm") entry.uppm = value;
-      } else {
-        entry.value = value;
-      }
-    }
-
-    function fillSelectedCells(){
-      if(!selectedCells.size) return;
-      autosaveNow();
-      const value = prompt("Ange värde att fylla i markerade celler:");
-      if(value === null) return;
-
-      for(const id of selectedCells) applyValueToCellId(id, value);
-
-      renderBody();
-      autosaveNow();
-      snapshotNow();
-      setStatus("Markerade celler fyllda.");
-    }
-
-    function clearSelectedCells(){
-      if(!selectedCells.size) return;
-      if(!confirm("Rensa markerade celler?")) return;
-
-      autosaveNow();
-      for(const id of selectedCells) applyValueToCellId(id, "");
-
-      renderBody();
-      autosaveNow();
-      snapshotNow();
-      setStatus("Markerade celler rensade.");
-    }
-
     function setQuickValue(rowIndex, entryIndex, value){
       currentProject.rows[rowIndex].values[entryIndex].value = value;
       renderBody();
       autosaveNow();
-      snapshotNow();
     }
 
     function openNoteModal(rowIndex){
@@ -1340,7 +1086,6 @@
       closeNoteModal();
       renderBody();
       autosaveNow();
-      snapshotNow();
       setStatus("Notering sparad.");
     }
 
@@ -1352,7 +1097,6 @@
       });
       renderBody();
       autosaveNow();
-      snapshotNow();
       setStatus("Rad tillagd.");
     }
 
@@ -1365,27 +1109,7 @@
       currentProject.rows.pop();
       renderBody();
       autosaveNow();
-      snapshotNow();
       setStatus("Sista raden borttagen.");
-    }
-
-    function sanitizeFileName(name){
-      return String(name || "")
-        .replace(/[\\\\/:*?\"<>|]/g, "-")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-
-    function getDocumentPrefix(){
-      return currentProject.system === "självdrag" ? "Lägenhetsprotokoll" : "Luftflödesprotokoll";
-    }
-
-    function getExportFileName(){
-      const base = `${getDocumentPrefix()} ${currentProject.documentTitle}`;
-      const cleanBase = sanitizeFileName(base);
-      const count = (currentProject.exportCount || 0) + 1;
-      if(count <= 1) return `${cleanBase}.pdf`;
-      return `${cleanBase} v.${count}.pdf`;
     }
 
     function downloadBackup(){
@@ -1417,7 +1141,7 @@
             currentProject = JSON.parse(reader.result);
             if(!currentProject.id) currentProject.id = uid();
             saveCurrentProject();
-            openCurrentProject(true);
+            openCurrentProject();
             setStatus("Backup återställd.");
           } catch(err){
             alert("Kunde inte läsa backupfilen.");
@@ -1426,6 +1150,25 @@
         reader.readAsText(file);
       };
       input.click();
+    }
+
+    function sanitizeFileName(name){
+      return String(name || "")
+        .replace(/[\\\\/:*?\"<>|]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function getDocumentPrefix(){
+      return currentProject.system === "självdrag" ? "Lägenhetsprotokoll" : "Luftflödesprotokoll";
+    }
+
+    function getExportFileName(){
+      const base = `${getDocumentPrefix()} ${currentProject.documentTitle}`;
+      const cleanBase = sanitizeFileName(base);
+      const count = (currentProject.exportCount || 0) + 1;
+      if(count <= 1) return `${cleanBase}.pdf`;
+      return `${cleanBase} v.${count}.pdf`;
     }
 
     function buildPdfHead(){
@@ -1607,7 +1350,6 @@
 
       currentProject.exportCount = (currentProject.exportCount || 0) + 1;
       saveCurrentProject();
-      snapshotNow();
       setStatus(`PDF exporterad: ${fileName}`);
     }
 
@@ -1615,7 +1357,6 @@
       addExecutor();
       renderSavedProjects();
 
-      // Robust autosave
       setInterval(() => {
         if(currentProject) autosaveNow();
       }, 1000);
@@ -1632,26 +1373,13 @@
         if(document.hidden && currentProject) autosaveNow();
       });
 
-      document.addEventListener("keydown", (e) => {
-        const ctrl = e.ctrlKey || e.metaKey;
-        if(ctrl && e.key.toLowerCase() === "z"){
-          e.preventDefault();
-          if(e.shiftKey) redoHistory();
-          else undoHistory();
-        }
-        if(ctrl && e.key.toLowerCase() === "y"){
-          e.preventDefault();
-          redoHistory();
-        }
-      });
-
       const lastId = getCurrentProjectId();
       if(lastId){
         const projects = getProjects();
         const found = projects.find(p => p.id === lastId);
         if(found){
           currentProject = clone(found);
-          openCurrentProject(true);
+          openCurrentProject();
         }
       }
     }
