@@ -11,11 +11,12 @@
     App.currentProject.template.groups.forEach(g => {
       for(let i = 1; i <= g.count; i++){
         const label = g.count > 1 ? `${g.label} ${i}` : g.label;
+
         if(g.type === "double"){
-          row1 += `<th colspan="2">${App.escapeHtml(label)}</th>`;
-          row2 += `<th>Proj</th><th>Uppm</th>`;
+          row1 += `<th colspan="2" class="room-divider">${App.escapeHtml(label)}</th>`;
+          row2 += `<th>Proj</th><th class="room-divider">Uppm</th>`;
         } else {
-          row1 += `<th rowspan="${hasDouble ? 2 : 1}">${App.escapeHtml(label)}</th>`;
+          row1 += `<th rowspan="${hasDouble ? 2 : 1}" class="room-divider">${App.escapeHtml(label)}</th>`;
         }
       }
     });
@@ -49,19 +50,25 @@
       let navCol = 1;
 
       row.values.forEach((entry, entryIndex) => {
+        const nextEntry = row.values[entryIndex + 1];
+        const isRoomEnd =
+          entry.mode === "double" ||
+          !nextEntry ||
+          nextEntry.mode !== entry.mode;
+
         if(entry.mode === "double"){
           html += `
             <td data-entry-index="${entryIndex}" data-mode="double">
               <input class="cell-input js-proj" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${App.escapeHtml(entry.proj || "")}">
             </td>
-            <td data-entry-index="${entryIndex}" data-mode="double">
+            <td data-entry-index="${entryIndex}" data-mode="double" class="room-divider">
               <input class="cell-input js-uppm" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${App.escapeHtml(entry.uppm || "")}">
             </td>
           `;
         } else if(entry.mode === "quick"){
           const val = entry.value || "";
           html += `
-            <td data-entry-index="${entryIndex}" data-mode="quick" data-quick-value="${App.escapeHtml(val)}">
+            <td data-entry-index="${entryIndex}" data-mode="quick" class="${isRoomEnd ? "room-divider" : ""}" data-quick-value="${App.escapeHtml(val)}">
               <div class="quick-menu">
                 ${["OK","SV","IN","UK"].map(opt => `
                   <button class="quick-btn ${val===opt ? "active" : ""}" type="button" onclick="setQuickValue(${rowIndex}, ${entryIndex}, '${opt}')">${opt}</button>
@@ -71,7 +78,7 @@
           `;
         } else {
           html += `
-            <td data-entry-index="${entryIndex}" data-mode="single">
+            <td data-entry-index="${entryIndex}" data-mode="single" class="${isRoomEnd ? "room-divider" : ""}">
               <input class="cell-input js-single" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${App.escapeHtml(entry.value || "")}">
             </td>
           `;
@@ -100,13 +107,13 @@
   };
 
   App.bindTableInputs = function(){
-  document.querySelectorAll("#tableBody input").forEach(i => {
-    i.oninput = () => {
-      App.scheduleAutosave();
-    };
-    i.onkeydown = App.handleInputKeydown;
-  });
-};
+    document.querySelectorAll("#tableBody input").forEach(i => {
+      i.oninput = () => {
+        App.scheduleAutosave();
+      };
+      i.onkeydown = App.handleInputKeydown;
+    });
+  };
 
   App.handleInputKeydown = function(e){
     const key = e.key;
