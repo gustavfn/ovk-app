@@ -100,19 +100,13 @@
   };
 
   App.bindTableInputs = function(){
-    document.querySelectorAll("#tableBody input").forEach(i => {
-      i.oninput = () => {
-        App.scheduleAutosave();
-      };
-      i.onkeydown = App.handleInputKeydown;
-      i.onfocus = function(){
-        this.select();
-      };
-      i.onclick = function(){
-        this.select();
-      };
-    });
-  };
+  document.querySelectorAll("#tableBody input").forEach(i => {
+    i.oninput = () => {
+      App.scheduleAutosave();
+    };
+    i.onkeydown = App.handleInputKeydown;
+  });
+};
 
   App.handleInputKeydown = function(e){
     const key = e.key;
