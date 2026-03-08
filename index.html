@@ -528,6 +528,7 @@
 
         <div class="toolbar" style="margin-top:18px;">
           <button class="btn-primary" onclick="createNewProject()">Öppna mall</button>
+          <button class="btn" onclick="restoreBackup()">Återställ backup</button>
         </div>
       </div>
 
@@ -585,6 +586,7 @@
         <button class="btn" onclick="addApartmentRow()">Lägg till rad</button>
         <button class="btn" onclick="removeApartmentRow()">Ta bort rad</button>
         <button class="btn" onclick="backToStart()">Till startsidan</button>
+        <button class="btn" onclick="downloadBackup()">Backup</button>
         <button class="btn-primary" onclick="exportPDF()">Klar / Exportera PDF</button>
       </div>
 
@@ -634,8 +636,8 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_projects_v6";
-    const APP_STATE_KEY = "ovk_app_current_project_id_v6";
+    const STORAGE_KEY = "ovk_app_projects_stable_v1";
+    const APP_STATE_KEY = "ovk_app_current_project_id_stable_v1";
     const HISTORY_LIMIT = 50;
 
     const templates = {
@@ -685,7 +687,6 @@
 
     let selectedSystem = "";
     let currentProject = null;
-    let autosaveTimer = null;
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
     let cachedLogoDataUrl = null;
@@ -828,14 +829,51 @@
       renderSavedProjects();
     }
 
-    function autosave(){
+    function collectUiIntoProject(){
       if(!currentProject) return;
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(() => {
-        collectUiIntoProject();
-        saveCurrentProject();
-        setStatus("Autosparat lokalt.");
-      }, 250);
+
+      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
+      currentProject.date = document.getElementById("dateField").value;
+      currentProject.method = document.getElementById("methodField").value.trim();
+      currentProject.performedBy = document.getElementById("performedByField").value.trim();
+
+      const rows = [];
+      document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
+        const apartment = tr.querySelector(".js-apartment").value.trim();
+        const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
+        const values = [];
+
+        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
+          const mode = entry.dataset.mode;
+          if(mode === "double"){
+            values.push({
+              mode: "double",
+              proj: entry.querySelector(".js-proj").value.trim(),
+              uppm: entry.querySelector(".js-uppm").value.trim()
+            });
+          } else if(mode === "quick"){
+            values.push({
+              mode: "quick",
+              value: entry.dataset.quickValue || ""
+            });
+          } else {
+            values.push({
+              mode: "single",
+              value: entry.querySelector(".js-single").value.trim()
+            });
+          }
+        });
+
+        rows.push({ apartment, values, note: noteData });
+      });
+
+      currentProject.rows = rows;
+    }
+
+    function autosaveNow(){
+      if(!currentProject) return;
+      collectUiIntoProject();
+      saveCurrentProject();
     }
 
     function snapshotNow(force = false){
@@ -861,11 +899,6 @@
       snapshotNow(true);
     }
 
-    function scheduleSnapshot(){
-      clearTimeout(window.__snapshotTimer);
-      window.__snapshotTimer = setTimeout(() => snapshotNow(false), 350);
-    }
-
     function undoHistory(){
       if(historyIndex <= 0){
         setStatus("Inget mer att ångra.");
@@ -886,6 +919,11 @@
       currentProject = JSON.parse(historyStack[historyIndex]);
       openCurrentProject(false);
       setStatus("Gjorde om ändringen.");
+    }
+
+    function scheduleSnapshot(){
+      clearTimeout(window.__snapshotTimer);
+      window.__snapshotTimer = setTimeout(() => snapshotNow(false), 350);
     }
 
     function createNewProject(){
@@ -946,10 +984,10 @@
       document.getElementById("methodField").value = currentProject.method || "";
       document.getElementById("performedByField").value = currentProject.performedBy || "";
 
-      document.getElementById("projectTitle").oninput = () => { autosave(); scheduleSnapshot(); };
-      document.getElementById("dateField").oninput = () => { autosave(); scheduleSnapshot(); };
-      document.getElementById("methodField").oninput = () => { autosave(); scheduleSnapshot(); };
-      document.getElementById("performedByField").oninput = () => { autosave(); scheduleSnapshot(); };
+      document.getElementById("projectTitle").oninput = () => { autosaveNow(); scheduleSnapshot(); };
+      document.getElementById("dateField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
+      document.getElementById("methodField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
+      document.getElementById("performedByField").oninput = () => { autosaveNow(); scheduleSnapshot(); };
 
       clearSelection(false);
       renderEditor();
@@ -960,60 +998,18 @@
     }
 
     function backToStart(){
-      collectUiIntoProject();
-      saveCurrentProject();
+      autosaveNow();
       document.getElementById("workScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSavedProjects();
       setStatus("Tillbaka till startsidan. Projektet är sparat.");
     }
 
-    function collectUiIntoProject(){
-      if(!currentProject) return;
-
-      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
-      currentProject.date = document.getElementById("dateField").value;
-      currentProject.method = document.getElementById("methodField").value.trim();
-      currentProject.performedBy = document.getElementById("performedByField").value.trim();
-
-      const rows = [];
-      document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
-        const apartment = tr.querySelector(".js-apartment").value.trim();
-        const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
-        const values = [];
-
-        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
-          const mode = entry.dataset.mode;
-          if(mode === "double"){
-            values.push({
-              mode: "double",
-              proj: entry.querySelector(".js-proj").value.trim(),
-              uppm: entry.querySelector(".js-uppm").value.trim()
-            });
-          } else if(mode === "quick"){
-            values.push({
-              mode: "quick",
-              value: entry.dataset.quickValue || ""
-            });
-          } else {
-            values.push({
-              mode: "single",
-              value: entry.querySelector(".js-single").value.trim()
-            });
-          }
-        });
-
-        rows.push({ apartment, values, note: noteData });
-      });
-
-      currentProject.rows = rows;
-    }
-
     function renderEditor(){
       const wrap = document.getElementById("editorControls");
       wrap.innerHTML = "";
 
-      currentProject.template.groups.forEach((g, groupIndex) => {
+      currentProject.template.groups.forEach((g) => {
         const box = document.createElement("div");
         box.style.border = "1px solid #b8b0a6";
         box.style.padding = "10px";
@@ -1032,7 +1028,7 @@
         const buttons = box.querySelectorAll("button");
 
         buttons[0].onclick = () => {
-          collectUiIntoProject();
+          autosaveNow();
           g.count += 1;
           currentProject.rows.forEach(row => {
             if(g.type === "double") row.values.push({ mode:"double", proj:"", uppm:"" });
@@ -1041,7 +1037,7 @@
           });
           renderEditor();
           renderTable();
-          autosave();
+          autosaveNow();
           snapshotNow();
           setStatus(`${g.label}: kolumn tillagd.`);
         };
@@ -1053,28 +1049,14 @@
           }
           if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
 
-          collectUiIntoProject();
-
-          // Remove last matching slot by walking structural positions
+          autosaveNow();
           currentProject.rows.forEach(row => {
-            const slots = [];
-            currentProject.template.groups.forEach(group => {
-              for(let i=0; i<group.count; i++){
-                slots.push(group.key);
-              }
-            });
-            for(let i = slots.length - 1; i >= 0; i--){
-              if(slots[i] === g.key){
-                row.values.splice(i, 1);
-                break;
-              }
-            }
+            row.values.pop();
           });
-
           g.count -= 1;
           renderEditor();
           renderTable();
-          autosave();
+          autosaveNow();
           snapshotNow();
           setStatus(`${g.label}: kolumn borttagen.`);
         };
@@ -1195,7 +1177,7 @@
 
     function bindTableInputs(){
       document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = () => { autosave(); scheduleSnapshot(); };
+        i.oninput = () => { autosaveNow(); scheduleSnapshot(); };
         i.onclick = e => e.stopPropagation();
         i.onkeydown = handleInputKeydown;
       });
@@ -1214,15 +1196,11 @@
     function bindSelectableCells(){
       document.querySelectorAll(".selectable-cell").forEach(td => {
         td.addEventListener("click", (e) => {
-          const target = e.target;
           const multi = e.ctrlKey || e.metaKey || selectionMode;
-          const clickedInput = target.tagName === "INPUT";
-
           if(!multi) return;
           e.preventDefault();
           e.stopPropagation();
           toggleCellSelection(td.dataset.cellId);
-          if(clickedInput) target.blur();
         });
 
         td.addEventListener("touchstart", () => {
@@ -1286,14 +1264,14 @@
 
     function fillSelectedCells(){
       if(!selectedCells.size) return;
-      collectUiIntoProject();
+      autosaveNow();
       const value = prompt("Ange värde att fylla i markerade celler:");
       if(value === null) return;
 
       for(const id of selectedCells) applyValueToCellId(id, value);
 
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
       setStatus("Markerade celler fyllda.");
     }
@@ -1302,11 +1280,11 @@
       if(!selectedCells.size) return;
       if(!confirm("Rensa markerade celler?")) return;
 
-      collectUiIntoProject();
+      autosaveNow();
       for(const id of selectedCells) applyValueToCellId(id, "");
 
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
       setStatus("Markerade celler rensade.");
     }
@@ -1314,12 +1292,12 @@
     function setQuickValue(rowIndex, entryIndex, value){
       currentProject.rows[rowIndex].values[entryIndex].value = value;
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
     }
 
     function openNoteModal(rowIndex){
-      collectUiIntoProject();
+      autosaveNow();
       currentNoteRowIndex = rowIndex;
       const row = currentProject.rows[rowIndex];
       const note = row.note || { level:0, text:"" };
@@ -1361,7 +1339,7 @@
       currentProject.rows[currentNoteRowIndex].note = { level: currentNoteLevel, text };
       closeNoteModal();
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
       setStatus("Notering sparad.");
     }
@@ -1373,7 +1351,7 @@
         note: { level:0, text:"" }
       });
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
       setStatus("Rad tillagd.");
     }
@@ -1386,7 +1364,7 @@
       if(!confirm("Ta bort sista raden?")) return;
       currentProject.rows.pop();
       renderBody();
-      autosave();
+      autosaveNow();
       snapshotNow();
       setStatus("Sista raden borttagen.");
     }
@@ -1408,6 +1386,46 @@
       const count = (currentProject.exportCount || 0) + 1;
       if(count <= 1) return `${cleanBase}.pdf`;
       return `${cleanBase} v.${count}.pdf`;
+    }
+
+    function downloadBackup(){
+      if(!currentProject){
+        alert("Inget projekt öppet.");
+        return;
+      }
+      autosaveNow();
+      const data = JSON.stringify(currentProject, null, 2);
+      const blob = new Blob([data], { type:"application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `ovk_backup_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setStatus("Backup nedladdad.");
+    }
+
+    function restoreBackup(){
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = function(e){
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(){
+          try{
+            currentProject = JSON.parse(reader.result);
+            if(!currentProject.id) currentProject.id = uid();
+            saveCurrentProject();
+            openCurrentProject(true);
+            setStatus("Backup återställd.");
+          } catch(err){
+            alert("Kunde inte läsa backupfilen.");
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
     }
 
     function buildPdfHead(){
@@ -1470,7 +1488,7 @@
     }
 
     async function exportPDF(){
-      collectUiIntoProject();
+      autosaveNow();
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("landscape");
@@ -1596,6 +1614,23 @@
     function init(){
       addExecutor();
       renderSavedProjects();
+
+      // Robust autosave
+      setInterval(() => {
+        if(currentProject) autosaveNow();
+      }, 1000);
+
+      window.addEventListener("beforeunload", function () {
+        if(currentProject) autosaveNow();
+      });
+
+      window.addEventListener("blur", function () {
+        if(currentProject) autosaveNow();
+      });
+
+      document.addEventListener("visibilitychange", function () {
+        if(document.hidden && currentProject) autosaveNow();
+      });
 
       document.addEventListener("keydown", (e) => {
         const ctrl = e.ctrlKey || e.metaKey;
