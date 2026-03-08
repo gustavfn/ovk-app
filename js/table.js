@@ -102,19 +102,109 @@
   App.bindTableInputs = function(){
     document.querySelectorAll("#tableBody input").forEach(i => {
       i.oninput = () => {
-  App.scheduleAutosave();
-};
+        App.scheduleAutosave();
+      };
       i.onkeydown = App.handleInputKeydown;
+      i.onfocus = function(){
+        this.select();
+      };
+      i.onclick = function(){
+        this.select();
+      };
     });
   };
 
   App.handleInputKeydown = function(e){
-    if(e.key === "Enter"){
+    const key = e.key;
+    const currentCol = Number(e.target.dataset.navCol);
+    const currentRow = Number(e.target.dataset.rowIndex);
+
+    const findCell = (row, col) => {
+      return document.querySelector(`[data-row-index="${row}"][data-nav-col="${col}"]`);
+    };
+
+    const moveTo = (row, col) => {
+      const next = findCell(row, col);
+      if(next){
+        next.focus();
+        return true;
+      }
+      return false;
+    };
+
+    if(key === "Enter"){
       e.preventDefault();
-      const currentCol = Number(e.target.dataset.navCol);
-      const currentRow = Number(e.target.dataset.rowIndex);
-      const next = document.querySelector(`[data-row-index="${currentRow + 1}"][data-nav-col="${currentCol}"]`);
-      if(next) next.focus();
+      if(!moveTo(currentRow + 1, currentCol)){
+        moveTo(currentRow, currentCol);
+      }
+      return;
+    }
+
+    if(key === "Tab"){
+      e.preventDefault();
+
+      if(e.shiftKey){
+        if(!moveTo(currentRow, currentCol - 1)){
+          const prevRow = currentRow - 1;
+          if(prevRow >= 0){
+            const prevRowInputs = [...document.querySelectorAll(`[data-row-index="${prevRow}"][data-nav-col]`)]
+              .map(el => Number(el.dataset.navCol))
+              .filter(Number.isFinite)
+              .sort((a, b) => a - b);
+
+            if(prevRowInputs.length){
+              moveTo(prevRow, prevRowInputs[prevRowInputs.length - 1]);
+            }
+          }
+        }
+      } else {
+        if(!moveTo(currentRow, currentCol + 1)){
+          const nextRow = currentRow + 1;
+          moveTo(nextRow, 0);
+        }
+      }
+      return;
+    }
+
+    if(key === "ArrowDown"){
+      e.preventDefault();
+      moveTo(currentRow + 1, currentCol);
+      return;
+    }
+
+    if(key === "ArrowUp"){
+      e.preventDefault();
+      if(currentRow > 0) moveTo(currentRow - 1, currentCol);
+      return;
+    }
+
+    if(key === "ArrowRight"){
+      if(e.target.selectionStart === e.target.value.length){
+        e.preventDefault();
+        if(!moveTo(currentRow, currentCol + 1)){
+          moveTo(currentRow + 1, 0);
+        }
+      }
+      return;
+    }
+
+    if(key === "ArrowLeft"){
+      if(e.target.selectionStart === 0 && e.target.selectionEnd === 0){
+        e.preventDefault();
+        if(!moveTo(currentRow, currentCol - 1)){
+          const prevRow = currentRow - 1;
+          if(prevRow >= 0){
+            const prevRowInputs = [...document.querySelectorAll(`[data-row-index="${prevRow}"][data-nav-col]`)]
+              .map(el => Number(el.dataset.navCol))
+              .filter(Number.isFinite)
+              .sort((a, b) => a - b);
+
+            if(prevRowInputs.length){
+              moveTo(prevRow, prevRowInputs[prevRowInputs.length - 1]);
+            }
+          }
+        }
+      }
     }
   };
 
