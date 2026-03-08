@@ -743,45 +743,65 @@
     }
 
     function collectUiIntoProject(){
-      if(!currentProject) return;
+  if(!currentProject) return;
 
-      currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
-      currentProject.date = document.getElementById("dateField").value;
-      currentProject.method = document.getElementById("methodField").value.trim();
-      currentProject.performedBy = document.getElementById("performedByField").value.trim();
+  currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
+  currentProject.date = document.getElementById("dateField").value;
+  currentProject.method = document.getElementById("methodField").value.trim();
+  currentProject.performedBy = document.getElementById("performedByField").value.trim();
 
-      const rows = [];
-      document.querySelectorAll("#tableBody tr").forEach((tr, rowIndex) => {
-        const apartment = tr.querySelector(".js-apartment").value.trim();
-        const noteData = currentProject.rows[rowIndex]?.note || { level:0, text:"" };
-        const values = [];
+  const rows = [];
+  const tableRows = document.querySelectorAll("#tableBody tr");
 
-        tr.querySelectorAll("[data-entry-index]").forEach(entry => {
-          const mode = entry.dataset.mode;
-          if(mode === "double"){
-            values.push({
-              mode: "double",
-              proj: entry.querySelector(".js-proj").value.trim(),
-              uppm: entry.querySelector(".js-uppm").value.trim()
-            });
-          } else if(mode === "quick"){
-            values.push({
-              mode: "quick",
-              value: entry.dataset.quickValue || ""
-            });
-          } else {
-            values.push({
-              mode: "single",
-              value: entry.querySelector(".js-single").value.trim()
-            });
-          }
-        });
+  tableRows.forEach((tr, rowIndex) => {
+    const apartmentInput = tr.querySelector(".js-apartment");
+    const apartment = apartmentInput ? apartmentInput.value.trim() : "";
+    const noteData = currentProject.rows[rowIndex]?.note || { level: 0, text: "" };
 
-        rows.push({ apartment, values, note: noteData });
-      });
+    const values = [];
+    let cellCursor = 0;
 
-      currentProject.rows = rows;
-    }
+    currentProject.template.groups.forEach(group => {
+      for(let i = 0; i < group.count; i++){
+        if(group.type === "double"){
+          const projInput = tr.querySelector(`.js-proj[data-nav-col="${cellCursor + 1}"]`);
+          const uppmInput = tr.querySelector(`.js-uppm[data-nav-col="${cellCursor + 2}"]`);
+
+          values.push({
+            mode: "double",
+            proj: projInput ? projInput.value.trim() : "",
+            uppm: uppmInput ? uppmInput.value.trim() : ""
+          });
+
+          cellCursor += 2;
+        } else if(group.type === "quick"){
+          const quickCells = tr.querySelectorAll('[data-mode="quick"]');
+          const quickCell = quickCells[values.filter(v => v.mode === "quick").length];
+          values.push({
+            mode: "quick",
+            value: quickCell ? (quickCell.dataset.quickValue || "") : ""
+          });
+        } else {
+          const singleInput = tr.querySelector(`.js-single[data-nav-col="${cellCursor + 1}"]`);
+          values.push({
+            mode: "single",
+            value: singleInput ? singleInput.value.trim() : ""
+          });
+
+          cellCursor += 1;
+        }
+      }
+    });
+
+    rows.push({
+      apartment,
+      values,
+      note: noteData
+    });
+  });
+
+  currentProject.rows = rows;
+}
 
     function autosaveNow(){
       if(!currentProject) return;
