@@ -184,9 +184,11 @@ textarea{
 }
 
 .table-wrap{
-  overflow:auto;
+  overflow-x:auto;
+  overflow-y:visible;
   border:1px solid var(--line);
   background:#fff;
+  position:relative;
 }
 
 table{
@@ -209,7 +211,34 @@ thead tr.main-head th{
   color:#fff;
   position:sticky;
   top:0;
-  z-index:3;
+  z-index:30;
+}
+
+/* Sticky lägenhetskolumn i body */
+.apt-cell{
+  background:#f8efe3 !important;
+  font-weight:700;
+  position:sticky;
+  left:0;
+  z-index:20;
+  min-width:110px;
+}
+
+.apt-cell,
+thead tr.main-head th:first-child{
+  box-shadow:2px 0 0 var(--line);
+}
+
+/* Sticky lägenhetsheader */
+thead tr.main-head th:first-child{
+  position:sticky;
+  left:0;
+  z-index:40;
+}
+
+/* Om det finns dubbel header ska första cellen i sub-head inte flytta över */
+thead tr.sub-head th{
+  z-index:29;
 }
 
 thead tr.sub-head th{
@@ -217,7 +246,7 @@ thead tr.sub-head th{
   color:#111;
   position:sticky;
   top:37px;
-  z-index:2;
+  z-index:29;
 }
 
 tbody td{
