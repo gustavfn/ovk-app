@@ -101,7 +101,9 @@
 
   App.bindTableInputs = function(){
     document.querySelectorAll("#tableBody input").forEach(i => {
-      i.oninput = App.scheduleAutosave;
+      i.oninput = () => {
+  App.scheduleAutosave();
+};
       i.onkeydown = App.handleInputKeydown;
     });
   };
