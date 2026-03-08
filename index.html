@@ -419,7 +419,6 @@
 </head>
 <body>
   <div class="app">
-
     <div class="brandbar">
       <img src="./logo.png" alt="Mäter i Sverige AB logga" class="brandmark" />
       <div>
@@ -555,8 +554,10 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "ovk_app_minimal_stable_v1";
-    const APP_STATE_KEY = "ovk_app_current_project_id_minimal_stable_v1";
+    const STORAGE_KEY = "ovk_app_stabilized_v2";
+    const APP_STATE_KEY = "ovk_app_current_project_id_stabilized_v2";
+    const AUTOSAVE_DELAY = 250;
+    const PERIODIC_SAVE_MS = 5000;
 
     const templates = {
       "självdrag": {
@@ -608,6 +609,8 @@
     let currentNoteRowIndex = null;
     let currentNoteLevel = 0;
     let cachedLogoDataUrl = null;
+    let autosaveTimer = null;
+    let lastSavedAt = 0;
 
     function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
     function uid(){ return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9); }
@@ -617,24 +620,41 @@
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+        .replace(/\"/g, "&quot;");
+    }
+
+    function isStartScreenVisible(){
+      return !document.getElementById("startScreen").classList.contains("hidden");
+    }
+
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); }
+      catch(e){ return fallback; }
     }
 
     function getProjects(){
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
-      catch(e){ return []; }
+      return safeParse(localStorage.getItem(STORAGE_KEY) || "[]", []);
     }
 
     function setProjects(projects){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+        return true;
+      } catch(e) {
+        setStatus("Kunde inte spara i lokal lagring. Kontrollera lagringsutrymme.");
+        console.error(e);
+        return false;
+      }
     }
 
     function setCurrentProjectId(id){
-      localStorage.setItem(APP_STATE_KEY, id || "");
+      try { localStorage.setItem(APP_STATE_KEY, id || ""); }
+      catch(e){ console.error(e); }
     }
 
     function getCurrentProjectId(){
-      return localStorage.getItem(APP_STATE_KEY) || "";
+      try { return localStorage.getItem(APP_STATE_KEY) || ""; }
+      catch(e){ return ""; }
     }
 
     function formatDateTime(iso){
@@ -647,6 +667,203 @@
     function setStatus(text){
       const el = document.getElementById("statusBox");
       if(el) el.textContent = "Status: " + text;
+    }
+
+    function getTemplateEntryDescriptors(template){
+      const descriptors = [];
+      template.groups.forEach((group, groupIndex) => {
+        const count = Math.max(1, Number(group.count) || 1);
+        for(let itemIndex = 0; itemIndex < count; itemIndex++){
+          descriptors.push({
+            groupIndex,
+            itemIndex,
+            type: group.type,
+            key: group.key,
+            label: group.label
+          });
+        }
+      });
+      return descriptors;
+    }
+
+    function createEmptyEntryByType(type){
+      if(type === "double") return { mode:"double", proj:"", uppm:"" };
+      if(type === "quick") return { mode:"quick", value:"" };
+      return { mode:"single", value:"" };
+    }
+
+    function buildEmptyValueArray(template){
+      return getTemplateEntryDescriptors(template).map(d => createEmptyEntryByType(d.type));
+    }
+
+    function makeApartmentLabel(n){
+      const floor = 11 + Math.floor((n - 1) / 3);
+      const door = ((n - 1) % 3) + 1;
+      return `${floor}0${door}`;
+    }
+
+    function buildInitialRows(template, count){
+      const rows = [];
+      for(let i = 1; i <= count; i++){
+        rows.push({
+          apartment: makeApartmentLabel(i),
+          values: buildEmptyValueArray(template),
+          note: { level: 0, text: "" }
+        });
+      }
+      return rows;
+    }
+
+    function normalizeRowValues(row, template){
+      const wanted = getTemplateEntryDescriptors(template);
+      const incoming = Array.isArray(row.values) ? row.values : [];
+      const out = [];
+
+      for(let i = 0; i < wanted.length; i++){
+        const desiredType = wanted[i].type;
+        const entry = incoming[i];
+        if(entry && entry.mode === desiredType){
+          if(desiredType === "double") out.push({ mode:"double", proj:String(entry.proj || ""), uppm:String(entry.uppm || "") });
+          else out.push({ mode:desiredType, value:String(entry.value || "") });
+        } else {
+          out.push(createEmptyEntryByType(desiredType));
+        }
+      }
+
+      row.values = out;
+      if(!row.note || typeof row.note !== "object") row.note = { level: 0, text: "" };
+      row.note.level = Number(row.note.level) || 0;
+      row.note.text = String(row.note.text || "");
+      row.apartment = String(row.apartment || "");
+      return row;
+    }
+
+    function normalizeProject(project){
+      if(!project || typeof project !== "object") return null;
+      if(!project.id) project.id = uid();
+      if(!project.system || !templates[project.system]) return null;
+
+      const baseTemplate = clone(templates[project.system]);
+      const incomingTemplate = project.template && Array.isArray(project.template.groups) ? project.template : baseTemplate;
+
+      project.template = {
+        title: incomingTemplate.title || baseTemplate.title,
+        groups: incomingTemplate.groups.map((group, index) => {
+          const fallback = baseTemplate.groups[index] || baseTemplate.groups[0];
+          return {
+            key: String(group.key || fallback.key || `g_${index}`),
+            label: String(group.label || fallback.label || `Rum ${index + 1}`),
+            type: ["double", "quick", "single"].includes(group.type) ? group.type : fallback.type,
+            count: Math.max(1, Number(group.count) || 1)
+          };
+        })
+      };
+
+      project.projectName = String(project.projectName || "");
+      project.documentTitle = String(project.documentTitle || "");
+      project.executors = Array.isArray(project.executors) ? project.executors.map(v => String(v || "")) : [""];
+      project.date = String(project.date || new Date().toISOString().slice(0,10));
+      project.method = String(project.method || "");
+      project.performedBy = String(project.performedBy || "");
+      project.exportCount = Number(project.exportCount) || 0;
+      project.updatedAt = project.updatedAt || new Date().toISOString();
+
+      if(!Array.isArray(project.rows) || !project.rows.length){
+        project.rows = buildInitialRows(project.template, 32);
+      } else {
+        project.rows = project.rows.map(row => normalizeRowValues(row, project.template));
+      }
+
+      return project;
+    }
+
+    function saveCurrentProject(options = {}){
+      if(!currentProject) return false;
+      currentProject.updatedAt = new Date().toISOString();
+      const projects = getProjects();
+      const idx = projects.findIndex(p => p.id === currentProject.id);
+      const cleanProject = clone(currentProject);
+      if(idx >= 0) projects[idx] = cleanProject;
+      else projects.push(cleanProject);
+
+      const ok = setProjects(projects);
+      if(ok){
+        setCurrentProjectId(currentProject.id);
+        lastSavedAt = Date.now();
+        if(options.renderList && isStartScreenVisible()) renderSavedProjects();
+      }
+      return ok;
+    }
+
+    function collectUiIntoProject(){
+      if(!currentProject) return;
+
+      const titleEl = document.getElementById("projectTitle");
+      const dateEl = document.getElementById("dateField");
+      const methodEl = document.getElementById("methodField");
+      const performedEl = document.getElementById("performedByField");
+
+      if(titleEl) currentProject.documentTitle = titleEl.value.trim();
+      if(dateEl) currentProject.date = dateEl.value;
+      if(methodEl) currentProject.method = methodEl.value.trim();
+      if(performedEl) currentProject.performedBy = performedEl.value.trim();
+
+      const descriptors = getTemplateEntryDescriptors(currentProject.template);
+      const rows = [];
+      const tableRows = document.querySelectorAll("#tableBody tr");
+
+      tableRows.forEach((tr, rowIndex) => {
+        const apartmentInput = tr.querySelector(".js-apartment");
+        const apartment = apartmentInput ? apartmentInput.value.trim() : "";
+        const noteData = currentProject.rows[rowIndex]?.note || { level: 0, text: "" };
+
+        const values = descriptors.map((desc, entryIndex) => {
+          if(desc.type === "double"){
+            const projInput = tr.querySelector(`.js-proj[data-entry-index="${entryIndex}"]`);
+            const uppmInput = tr.querySelector(`.js-uppm[data-entry-index="${entryIndex}"]`);
+            return {
+              mode: "double",
+              proj: projInput ? projInput.value.trim() : "",
+              uppm: uppmInput ? uppmInput.value.trim() : ""
+            };
+          }
+          if(desc.type === "quick"){
+            const quickCell = tr.querySelector(`td[data-mode="quick"][data-entry-index="${entryIndex}"]`);
+            return {
+              mode: "quick",
+              value: quickCell ? String(quickCell.dataset.quickValue || "") : ""
+            };
+          }
+          const singleInput = tr.querySelector(`.js-single[data-entry-index="${entryIndex}"]`);
+          return {
+            mode: "single",
+            value: singleInput ? singleInput.value.trim() : ""
+          };
+        });
+
+        rows.push({
+          apartment,
+          values,
+          note: { level: Number(noteData.level) || 0, text: String(noteData.text || "") }
+        });
+      });
+
+      currentProject.rows = rows;
+    }
+
+    function flushAutosave(renderList = false){
+      if(!currentProject) return;
+      collectUiIntoProject();
+      saveCurrentProject({ renderList });
+    }
+
+    function scheduleAutosave(){
+      if(!currentProject) return;
+      window.clearTimeout(autosaveTimer);
+      autosaveTimer = window.setTimeout(() => {
+        flushAutosave(false);
+        setStatus("Autosparat.");
+      }, AUTOSAVE_DELAY);
     }
 
     function addExecutor(value = ""){
@@ -673,40 +890,12 @@
       btn.classList.add("active");
     }
 
-    function buildEmptyValueArray(template){
-      const arr = [];
-      template.groups.forEach(group => {
-        for(let i=1; i<=group.count; i++){
-          if(group.type === "double") arr.push({ mode:"double", proj:"", uppm:"" });
-          else if(group.type === "quick") arr.push({ mode:"quick", value:"" });
-          else arr.push({ mode:"single", value:"" });
-        }
-      });
-      return arr;
-    }
-
-    function makeApartmentLabel(n){
-      const floor = 11 + Math.floor((n - 1) / 3);
-      const door = ((n - 1) % 3) + 1;
-      return `${floor}0${door}`;
-    }
-
-    function buildInitialRows(template, count){
-      const rows = [];
-      for(let i=1; i<=count; i++){
-        rows.push({
-          apartment: makeApartmentLabel(i),
-          values: buildEmptyValueArray(template),
-          note: { level: 0, text: "" }
-        });
-      }
-      return rows;
-    }
-
     function renderSavedProjects(){
       const list = document.getElementById("savedProjectsList");
       const q = (document.getElementById("projectSearch").value || "").toLowerCase().trim();
       const projects = getProjects()
+        .map(normalizeProject)
+        .filter(Boolean)
         .sort((a,b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
         .filter(p => {
           const hay = `${p.projectName} ${p.documentTitle} ${p.system}`.toLowerCase();
@@ -730,85 +919,6 @@
       `).join("");
     }
 
-    function saveCurrentProject(){
-      if(!currentProject) return;
-      currentProject.updatedAt = new Date().toISOString();
-      const projects = getProjects();
-      const idx = projects.findIndex(p => p.id === currentProject.id);
-      if(idx >= 0) projects[idx] = clone(currentProject);
-      else projects.push(clone(currentProject));
-      setProjects(projects);
-      setCurrentProjectId(currentProject.id);
-      renderSavedProjects();
-    }
-
-    function collectUiIntoProject(){
-  if(!currentProject) return;
-
-  currentProject.documentTitle = document.getElementById("projectTitle").value.trim();
-  currentProject.date = document.getElementById("dateField").value;
-  currentProject.method = document.getElementById("methodField").value.trim();
-  currentProject.performedBy = document.getElementById("performedByField").value.trim();
-
-  const rows = [];
-  const tableRows = document.querySelectorAll("#tableBody tr");
-
-  tableRows.forEach((tr, rowIndex) => {
-    const apartmentInput = tr.querySelector(".js-apartment");
-    const apartment = apartmentInput ? apartmentInput.value.trim() : "";
-    const noteData = currentProject.rows[rowIndex]?.note || { level: 0, text: "" };
-
-    const values = [];
-    let cellCursor = 0;
-
-    currentProject.template.groups.forEach(group => {
-      for(let i = 0; i < group.count; i++){
-        if(group.type === "double"){
-          const projInput = tr.querySelector(`.js-proj[data-nav-col="${cellCursor + 1}"]`);
-          const uppmInput = tr.querySelector(`.js-uppm[data-nav-col="${cellCursor + 2}"]`);
-
-          values.push({
-            mode: "double",
-            proj: projInput ? projInput.value.trim() : "",
-            uppm: uppmInput ? uppmInput.value.trim() : ""
-          });
-
-          cellCursor += 2;
-        } else if(group.type === "quick"){
-          const quickCells = tr.querySelectorAll('[data-mode="quick"]');
-          const quickCell = quickCells[values.filter(v => v.mode === "quick").length];
-          values.push({
-            mode: "quick",
-            value: quickCell ? (quickCell.dataset.quickValue || "") : ""
-          });
-        } else {
-          const singleInput = tr.querySelector(`.js-single[data-nav-col="${cellCursor + 1}"]`);
-          values.push({
-            mode: "single",
-            value: singleInput ? singleInput.value.trim() : ""
-          });
-
-          cellCursor += 1;
-        }
-      }
-    });
-
-    rows.push({
-      apartment,
-      values,
-      note: noteData
-    });
-  });
-
-  currentProject.rows = rows;
-}
-
-    function autosaveNow(){
-      if(!currentProject) return;
-      collectUiIntoProject();
-      saveCurrentProject();
-    }
-
     function createNewProject(){
       const projectName = document.getElementById("startProjectName").value.trim();
       const documentTitle = document.getElementById("startDocumentTitle").value.trim();
@@ -818,7 +928,7 @@
       if(!documentTitle){ alert("Fyll i dokumentrubrik."); return; }
       if(!selectedSystem){ alert("Välj systemtyp."); return; }
 
-      currentProject = {
+      currentProject = normalizeProject({
         id: uid(),
         projectName,
         documentTitle,
@@ -831,9 +941,9 @@
         rows: buildInitialRows(clone(templates[selectedSystem]), 32),
         exportCount: 0,
         updatedAt: new Date().toISOString()
-      };
+      });
 
-      saveCurrentProject();
+      saveCurrentProject({ renderList: true });
       openCurrentProject();
     }
 
@@ -841,7 +951,7 @@
       const projects = getProjects();
       const found = projects.find(p => p.id === id);
       if(!found) return;
-      currentProject = clone(found);
+      currentProject = normalizeProject(clone(found));
       setCurrentProjectId(currentProject.id);
       openCurrentProject();
     }
@@ -855,7 +965,16 @@
       renderSavedProjects();
     }
 
+    function bindTopFields(){
+      ["projectTitle", "dateField", "methodField", "performedByField"].forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.oninput = scheduleAutosave;
+      });
+    }
+
     function openCurrentProject(){
+      currentProject = normalizeProject(currentProject);
       document.getElementById("startScreen").classList.add("hidden");
       document.getElementById("workScreen").classList.remove("hidden");
 
@@ -867,94 +986,111 @@
       document.getElementById("methodField").value = currentProject.method || "";
       document.getElementById("performedByField").value = currentProject.performedBy || "";
 
-      document.getElementById("projectTitle").oninput = autosaveNow;
-      document.getElementById("dateField").oninput = autosaveNow;
-      document.getElementById("methodField").oninput = autosaveNow;
-      document.getElementById("performedByField").oninput = autosaveNow;
-
+      bindTopFields();
       renderEditor();
       renderTable();
       setStatus("Projekt öppnat.");
     }
 
     function backToStart(){
-      autosaveNow();
+      flushAutosave(true);
       document.getElementById("workScreen").classList.add("hidden");
       document.getElementById("startScreen").classList.remove("hidden");
       renderSavedProjects();
       setStatus("Tillbaka till startsidan. Projektet är sparat.");
     }
 
-    function renderEditor(){
-  const wrap = document.getElementById("editorControls");
-  wrap.innerHTML = "";
-
-  currentProject.template.groups.forEach((g) => {
-    const box = document.createElement("div");
-    box.style.border = "1px solid #b8b0a6";
-    box.style.padding = "10px";
-    box.style.background = "#fff";
-    box.style.minWidth = "220px";
-
-    box.innerHTML = `
-      <label style="display:block; font-size:11px; font-weight:700; margin-bottom:6px;">
-        Rumsnamn
-      </label>
-      <input class="group-label-input" type="text" value="${escapeHtml(g.label)}" style="margin-bottom:8px;" />
-
-      <div class="muted" style="margin:6px 0 8px 0;">
-        Typ: ${g.type === "double" ? "Proj/Uppm" : g.type === "quick" ? "Snabbval" : "Enkel"}
-      </div>
-
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="small-btn" type="button">Lägg till</button>
-        <button class="small-btn" type="button">Ta bort</button>
-      </div>
-    `;
-
-    const labelInput = box.querySelector(".group-label-input");
-    const buttons = box.querySelectorAll("button");
-
-    labelInput.addEventListener("input", () => {
-      g.label = labelInput.value.trim() || "Namnlös";
-      renderHead();
-      autosaveNow();
-      setStatus("Rumsnamn uppdaterat.");
-    });
-
-    buttons[0].onclick = () => {
-      autosaveNow();
-      g.count += 1;
-      currentProject.rows.forEach(row => {
-        if(g.type === "double") row.values.push({ mode:"double", proj:"", uppm:"" });
-        else if(g.type === "quick") row.values.push({ mode:"quick", value:"" });
-        else row.values.push({ mode:"single", value:"" });
-      });
-      renderEditor();
-      renderTable();
-      autosaveNow();
-      setStatus(`${g.label}: kolumn tillagd.`);
-    };
-
-    buttons[1].onclick = () => {
-      if(g.count <= 1){
-        setStatus(`${g.label}: minst en måste finnas kvar.`);
-        return;
+    function getValueInsertIndex(groupIndex){
+      let index = 0;
+      for(let i = 0; i < groupIndex; i++){
+        index += Math.max(1, Number(currentProject.template.groups[i].count) || 1);
       }
-      if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
+      return index;
+    }
 
-      autosaveNow();
-      currentProject.rows.forEach(row => row.values.pop());
-      g.count -= 1;
-      renderEditor();
-      renderTable();
-      autosaveNow();
-      setStatus(`${g.label}: kolumn borttagen.`);
-    };
+    function insertColumnAtGroup(groupIndex){
+      const group = currentProject.template.groups[groupIndex];
+      const insertIndex = getValueInsertIndex(groupIndex) + group.count;
+      currentProject.rows.forEach(row => {
+        row.values.splice(insertIndex, 0, createEmptyEntryByType(group.type));
+      });
+      group.count += 1;
+    }
 
-    wrap.appendChild(box);
-  });
-}
+    function removeColumnAtGroup(groupIndex){
+      const group = currentProject.template.groups[groupIndex];
+      if(group.count <= 1) return false;
+      const removeIndex = getValueInsertIndex(groupIndex) + group.count - 1;
+      currentProject.rows.forEach(row => {
+        row.values.splice(removeIndex, 1);
+      });
+      group.count -= 1;
+      return true;
+    }
+
+    function renderEditor(){
+      const wrap = document.getElementById("editorControls");
+      wrap.innerHTML = "";
+
+      currentProject.template.groups.forEach((g, groupIndex) => {
+        const box = document.createElement("div");
+        box.style.border = "1px solid #b8b0a6";
+        box.style.padding = "10px";
+        box.style.background = "#fff";
+        box.style.minWidth = "220px";
+
+        box.innerHTML = `
+          <label style="display:block; font-size:11px; font-weight:700; margin-bottom:6px;">
+            Rumsnamn
+          </label>
+          <input class="group-label-input" type="text" value="${escapeHtml(g.label)}" style="margin-bottom:8px;" />
+
+          <div class="muted" style="margin:6px 0 8px 0;">
+            Typ: ${g.type === "double" ? "Proj/Uppm" : g.type === "quick" ? "Snabbval" : "Enkel"} · Kolumner: ${g.count}
+          </div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="small-btn" type="button">Lägg till</button>
+            <button class="small-btn" type="button">Ta bort</button>
+          </div>
+        `;
+
+        const labelInput = box.querySelector(".group-label-input");
+        const buttons = box.querySelectorAll("button");
+
+        labelInput.addEventListener("input", () => {
+          g.label = labelInput.value.trim() || "Namnlös";
+          renderHead();
+          scheduleAutosave();
+          setStatus("Rumsnamn uppdaterat.");
+        });
+
+        buttons[0].onclick = () => {
+          flushAutosave(false);
+          insertColumnAtGroup(groupIndex);
+          renderEditor();
+          renderTable();
+          flushAutosave(false);
+          setStatus(`${g.label}: kolumn tillagd.`);
+        };
+
+        buttons[1].onclick = () => {
+          if(g.count <= 1){
+            setStatus(`${g.label}: minst en måste finnas kvar.`);
+            return;
+          }
+          if(!confirm(`Ta bort sista kolumnen för ${g.label}?`)) return;
+          flushAutosave(false);
+          removeColumnAtGroup(groupIndex);
+          renderEditor();
+          renderTable();
+          flushAutosave(false);
+          setStatus(`${g.label}: kolumn borttagen.`);
+        };
+
+        wrap.appendChild(box);
+      });
+    }
 
     function renderHead(){
       const head = document.getElementById("tableHead");
@@ -964,13 +1100,13 @@
       let row2 = `<tr class="sub-head">`;
 
       currentProject.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
+        for(let i = 1; i <= g.count; i++){
           const label = g.count > 1 ? `${g.label} ${i}` : g.label;
           if(g.type === "double"){
-            row1 += `<th colspan="2">${label}</th>`;
+            row1 += `<th colspan="2">${escapeHtml(label)}</th>`;
             row2 += `<th>Proj</th><th>Uppm</th>`;
           } else {
-            row1 += `<th rowspan="${hasDouble ? 2 : 1}">${label}</th>`;
+            row1 += `<th rowspan="${hasDouble ? 2 : 1}">${escapeHtml(label)}</th>`;
           }
         }
       });
@@ -1007,10 +1143,10 @@
           if(entry.mode === "double"){
             html += `
               <td data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-proj" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.proj || "")}">
+                <input class="cell-input js-proj" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.proj || "")}">
               </td>
               <td data-entry-index="${entryIndex}" data-mode="double">
-                <input class="cell-input js-uppm" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.uppm || "")}">
+                <input class="cell-input js-uppm" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.uppm || "")}">
               </td>
             `;
           } else if(entry.mode === "quick"){
@@ -1027,19 +1163,18 @@
           } else {
             html += `
               <td data-entry-index="${entryIndex}" data-mode="single">
-                <input class="cell-input js-single" maxlength="4" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.value || "")}">
+                <input class="cell-input js-single" maxlength="4" data-entry-index="${entryIndex}" data-nav-col="${navCol++}" data-row-index="${rowIndex}" value="${escapeHtml(entry.value || "")}">
               </td>
             `;
           }
         });
 
         const noteClass = note.level === 2 ? "level-2" : note.level === 1 ? "level-1" : "empty";
+        const noteText = note.text ? `📝 ${note.level === 1 ? "*" : note.level === 2 ? "**" : ""}` : "📝";
 
         html += `
           <td>
-            <button class="note-btn ${noteClass}" type="button" onclick="openNoteModal(${rowIndex})">
-              ${note.text ? "📝 " + (note.level === 1 ? "*" : note.level === 2 ? "**" : "") : "📝"}
-            </button>
+            <button class="note-btn ${noteClass}" type="button" onclick="openNoteModal(${rowIndex})">${noteText}</button>
           </td>
         `;
 
@@ -1057,7 +1192,7 @@
 
     function bindTableInputs(){
       document.querySelectorAll("#tableBody input").forEach(i => {
-        i.oninput = autosaveNow;
+        i.oninput = scheduleAutosave;
         i.onkeydown = handleInputKeydown;
       });
     }
@@ -1073,13 +1208,18 @@
     }
 
     function setQuickValue(rowIndex, entryIndex, value){
+      if(!currentProject?.rows[rowIndex]?.values[entryIndex]) return;
       currentProject.rows[rowIndex].values[entryIndex].value = value;
-      renderBody();
-      autosaveNow();
+      const cell = document.querySelector(`#tableBody tr:nth-child(${rowIndex + 1}) td[data-mode="quick"][data-entry-index="${entryIndex}"]`);
+      if(cell){
+        cell.dataset.quickValue = value;
+        cell.querySelectorAll(".quick-btn").forEach(btn => btn.classList.toggle("active", btn.textContent === value));
+      }
+      scheduleAutosave();
     }
 
     function openNoteModal(rowIndex){
-      autosaveNow();
+      flushAutosave(false);
       currentNoteRowIndex = rowIndex;
       const row = currentProject.rows[rowIndex];
       const note = row.note || { level:0, text:"" };
@@ -1121,7 +1261,7 @@
       currentProject.rows[currentNoteRowIndex].note = { level: currentNoteLevel, text };
       closeNoteModal();
       renderBody();
-      autosaveNow();
+      flushAutosave(false);
       setStatus("Notering sparad.");
     }
 
@@ -1132,7 +1272,7 @@
         note: { level:0, text:"" }
       });
       renderBody();
-      autosaveNow();
+      flushAutosave(false);
       setStatus("Rad tillagd.");
     }
 
@@ -1144,7 +1284,7 @@
       if(!confirm("Ta bort sista raden?")) return;
       currentProject.rows.pop();
       renderBody();
-      autosaveNow();
+      flushAutosave(false);
       setStatus("Sista raden borttagen.");
     }
 
@@ -1153,14 +1293,15 @@
         alert("Inget projekt öppet.");
         return;
       }
-      autosaveNow();
+      flushAutosave(false);
       const data = JSON.stringify(currentProject, null, 2);
       const blob = new Blob([data], { type:"application/json" });
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      a.href = url;
       a.download = `ovk_backup_${Date.now()}.json`;
       a.click();
-      URL.revokeObjectURL(a.href);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       setStatus("Backup nedladdad.");
     }
 
@@ -1174,13 +1315,16 @@
         const reader = new FileReader();
         reader.onload = function(){
           try{
-            currentProject = JSON.parse(reader.result);
-            if(!currentProject.id) currentProject.id = uid();
-            saveCurrentProject();
+            const parsed = safeParse(reader.result, null);
+            const normalized = normalizeProject(parsed);
+            if(!normalized) throw new Error("Invalid backup");
+            currentProject = normalized;
+            saveCurrentProject({ renderList: true });
             openCurrentProject();
             setStatus("Backup återställd.");
           } catch(err){
             alert("Kunde inte läsa backupfilen.");
+            console.error(err);
           }
         };
         reader.readAsText(file);
@@ -1213,7 +1357,7 @@
       if(!hasDouble){
         const row = [{ content: "Lägenhet" }];
         currentProject.template.groups.forEach(g => {
-          for(let i=1; i<=g.count; i++){
+          for(let i = 1; i <= g.count; i++){
             row.push({ content: g.count > 1 ? `${g.label} ${i}` : g.label });
           }
         });
@@ -1225,7 +1369,7 @@
       const row2 = [];
 
       currentProject.template.groups.forEach(g => {
-        for(let i=1; i<=g.count; i++){
+        for(let i = 1; i <= g.count; i++){
           const label = g.count > 1 ? `${g.label} ${i}` : g.label;
           if(g.type === "double"){
             row1.push({ content: label, colSpan: 2 });
@@ -1267,7 +1411,12 @@
     }
 
     async function exportPDF(){
-      autosaveNow();
+      flushAutosave(false);
+
+      if(!window.jspdf || !window.jspdf.jsPDF || typeof window.jspdf.jsPDF !== "function"){
+        alert("PDF-biblioteket är inte laddat. För helt offline PDF-export behöver jsPDF bäddas in lokalt i appen.");
+        return;
+      }
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("landscape");
@@ -1385,7 +1534,7 @@
       doc.save(fileName);
 
       currentProject.exportCount = (currentProject.exportCount || 0) + 1;
-      saveCurrentProject();
+      saveCurrentProject({ renderList: false });
       setStatus(`PDF exporterad: ${fileName}`);
     }
 
@@ -1394,19 +1543,21 @@
       renderSavedProjects();
 
       setInterval(() => {
-        if(currentProject) autosaveNow();
-      }, 1000);
+        if(currentProject && Date.now() - lastSavedAt > PERIODIC_SAVE_MS){
+          flushAutosave(false);
+        }
+      }, PERIODIC_SAVE_MS);
 
       window.addEventListener("beforeunload", function () {
-        if(currentProject) autosaveNow();
+        if(currentProject) flushAutosave(false);
       });
 
       window.addEventListener("blur", function () {
-        if(currentProject) autosaveNow();
+        if(currentProject) flushAutosave(false);
       });
 
       document.addEventListener("visibilitychange", function () {
-        if(document.hidden && currentProject) autosaveNow();
+        if(document.hidden && currentProject) flushAutosave(false);
       });
 
       const lastId = getCurrentProjectId();
@@ -1414,7 +1565,7 @@
         const projects = getProjects();
         const found = projects.find(p => p.id === lastId);
         if(found){
-          currentProject = clone(found);
+          currentProject = normalizeProject(clone(found));
           openCurrentProject();
         }
       }
