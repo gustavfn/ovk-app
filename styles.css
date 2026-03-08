@@ -12,10 +12,10 @@
   --yellow:#d8a100;
   --red:#c62828;
 
-  --head-row-1-height:34px;
-  --head-row-2-height:32px;
-  --sticky-left-width:90px;
-  --note-col-width:72px;
+  --head-row-1-height:32px;
+  --head-row-2-height:28px;
+  --sticky-left-width:74px;
+  --note-col-width:56px;
 }
 
 *{
@@ -217,21 +217,21 @@ textarea{
 .mb-10{ margin-bottom:10px; }
 
 /* =========================
-   TABELL
+   TABELL – MAXIMALT KOMPAKT
    ========================= */
 
 .table-wrap{
   position:relative;
-  overflow-x:auto;
+  overflow-x:hidden;   /* ingen sidscroll */
   overflow-y:clip;
   border:1px solid var(--line);
   background:#fff;
-  -webkit-overflow-scrolling:touch;
 }
 
 table{
   width:100%;
-  min-width:0;
+  min-width:100%;
+  max-width:100%;
   border-collapse:separate;
   border-spacing:0;
   table-layout:fixed;
@@ -242,15 +242,18 @@ table{
   min-width:0;
 }
 
+/* Header */
 thead th{
   border:1px solid var(--line);
-  padding:0 4px;
+  padding:2px 2px;
   text-align:center;
-  font-size:12px;
-  white-space:nowrap;
+  font-size:11px;
+  line-height:1.05;
+  white-space:normal;         /* viktigt: tillåt radbrytning */
+  word-break:break-word;
+  overflow-wrap:anywhere;
   background-clip:padding-box;
   position:sticky;
-  line-height:1.1;
 }
 
 thead tr.main-head th{
@@ -258,7 +261,6 @@ thead tr.main-head th{
   color:#fff;
   top:0;
   z-index:60;
-  height:var(--head-row-1-height);
   min-height:var(--head-row-1-height);
 }
 
@@ -267,11 +269,12 @@ thead tr.sub-head th{
   color:#111;
   top:var(--head-row-1-height);
   z-index:59;
-  height:var(--head-row-2-height);
   min-height:var(--head-row-2-height);
+  font-size:10px;
+  padding:1px 2px;
 }
 
-/* Sticky första kolumnen i header */
+/* Sticky första headercellen */
 thead tr.main-head th:first-child{
   left:0;
   z-index:90;
@@ -281,7 +284,7 @@ thead tr.main-head th:first-child{
   box-shadow:2px 0 0 var(--line);
 }
 
-/* Kroppsceller */
+/* Body */
 tbody td{
   border:1px solid var(--line-soft);
   padding:0;
@@ -307,7 +310,7 @@ tbody tr:nth-child(even) td{
   box-shadow:2px 0 0 var(--line);
 }
 
-/* Noteringskolumn kompakt */
+/* Noteringskolumn */
 #protocolTable thead th:last-child{
   width:var(--note-col-width);
   min-width:var(--note-col-width);
@@ -329,14 +332,14 @@ tbody tr:focus-within .apt-cell{
   background:#f4e5d3 !important;
 }
 
-/* Inputs i celler */
+/* Inputs */
 .cell-input{
   width:100%;
-  min-height:30px;
+  min-height:24px;
   border:none;
   background:transparent;
-  padding:5px 4px;
-  font-size:12px;
+  padding:2px 2px;
+  font-size:10px;
   outline:none;
   text-align:center;
 }
@@ -347,20 +350,20 @@ tbody tr:focus-within .apt-cell{
 
 .cell-input:focus{
   background:#fff7ea;
-  outline:2px solid rgba(224,172,0,.28);
-  outline-offset:-2px;
+  outline:1px solid rgba(224,172,0,.45);
+  outline-offset:-1px;
 }
 
-/* Noteringsknapp */
+/* Notering */
 .note-btn{
   width:100%;
-  min-height:30px;
+  min-height:24px;
   border:none;
   background:transparent;
   font-weight:700;
   cursor:pointer;
-  font-size:12px;
-  padding:4px 2px;
+  font-size:10px;
+  padding:2px 1px;
 }
 
 .note-btn.empty{ color:#666; }
@@ -468,22 +471,22 @@ tbody tr:focus-within .apt-cell{
   color:#333;
 }
 
-/* Självdrag snabbknappar */
+/* Snabbknappar */
 .quick-menu{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:2px;
-  padding:2px;
+  gap:1px;
+  padding:1px;
 }
 
 .quick-btn{
   border:1px solid transparent;
   background:transparent;
-  min-height:28px;
-  font-size:11px;
+  min-height:22px;
+  font-size:9px;
   font-weight:700;
   cursor:pointer;
-  padding:2px;
+  padding:1px;
 }
 
 .quick-btn.active{
@@ -492,7 +495,6 @@ tbody tr:focus-within .apt-cell{
   border-color:#a77b00;
 }
 
-/* Responsivt */
 @media (max-width:1100px){
   .grid-3,
   .grid-2,
@@ -516,19 +518,9 @@ tbody tr:focus-within .apt-cell{
   }
 
   :root{
-    --sticky-left-width:82px;
-    --note-col-width:64px;
-    --head-row-1-height:32px;
-    --head-row-2-height:30px;
-  }
-
-  thead th{
-    font-size:11px;
-    padding:0 3px;
-  }
-
-  .cell-input{
-    font-size:11px;
-    padding:4px 3px;
+    --sticky-left-width:68px;
+    --note-col-width:52px;
+    --head-row-1-height:30px;
+    --head-row-2-height:26px;
   }
 }
