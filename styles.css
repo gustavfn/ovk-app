@@ -5,17 +5,20 @@
   --panel:#ffffff;
   --line:#b8b0a6;
   --line-soft:#d8d1c8;
+  --line-strong:#9b9185;
   --text:#20262c;
   --dark:#2f2f2f;
   --sub:#f1ebe3;
+  --sub-2:#ebe3d7;
   --row-alt:#fcfaf7;
+  --row-focus:#fff8ef;
   --yellow:#d8a100;
   --red:#c62828;
 
   --head-row-1-height:32px;
   --head-row-2-height:28px;
-  --sticky-left-width:74px;
-  --note-col-width:56px;
+  --sticky-left-width:64px;
+  --note-col-width:54px;
 }
 
 *{
@@ -217,20 +220,19 @@ textarea{
 .mb-10{ margin-bottom:10px; }
 
 /* =========================
-   TABELL – MAXIMALT KOMPAKT
+   TABELL – KOMPAKT UTAN SIDSCROLL
    ========================= */
 
 .table-wrap{
   position:relative;
-  overflow-x:hidden;   /* ingen sidscroll */
-  overflow-y:clip;
+  overflow:hidden;
+  width:100%;
   border:1px solid var(--line);
   background:#fff;
 }
 
 table{
   width:100%;
-  min-width:100%;
   max-width:100%;
   border-collapse:separate;
   border-spacing:0;
@@ -239,21 +241,27 @@ table{
 
 #protocolTable th,
 #protocolTable td{
+  width:auto;
   min-width:0;
+  max-width:none;
 }
 
 /* Header */
 thead th{
-  border:1px solid var(--line);
+  border-top:1px solid var(--line);
+  border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  border-left:1px solid var(--line);
   padding:2px 2px;
   text-align:center;
   font-size:11px;
   line-height:1.05;
-  white-space:normal;         /* viktigt: tillåt radbrytning */
+  white-space:normal;
   word-break:break-word;
   overflow-wrap:anywhere;
   background-clip:padding-box;
   position:sticky;
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.035);
 }
 
 thead tr.main-head th{
@@ -265,7 +273,7 @@ thead tr.main-head th{
 }
 
 thead tr.sub-head th{
-  background:var(--sub);
+  background:linear-gradient(180deg,var(--sub) 0%, var(--sub-2) 100%);
   color:#111;
   top:var(--head-row-1-height);
   z-index:59;
@@ -274,27 +282,59 @@ thead tr.sub-head th{
   padding:1px 2px;
 }
 
-/* Sticky första headercellen */
+/* Lägenhetsheader */
 thead tr.main-head th:first-child{
   left:0;
   z-index:90;
   width:var(--sticky-left-width);
   min-width:var(--sticky-left-width);
   max-width:var(--sticky-left-width);
-  box-shadow:2px 0 0 var(--line);
+  box-shadow:
+    2px 0 0 var(--line-strong),
+    inset -1px 0 0 rgba(255,255,255,.08);
+}
+
+/* Noteringsheader */
+#protocolTable thead th:last-child{
+  width:var(--note-col-width);
+  min-width:var(--note-col-width);
+  max-width:var(--note-col-width);
 }
 
 /* Body */
 tbody td{
-  border:1px solid var(--line-soft);
+  border-top:1px solid var(--line-soft);
+  border-right:1px solid #d6cec4;
+  border-bottom:1px solid var(--line-soft);
+  border-left:1px solid #e6e0d8;
   padding:0;
   background:#fff;
   vertical-align:middle;
   background-clip:padding-box;
+  box-shadow:inset -1px 0 0 rgba(0,0,0,.025);
 }
 
 tbody tr:nth-child(even) td{
   background:var(--row-alt);
+}
+
+/* Visuellt lite tydligare rumsseparation generellt */
+thead tr.main-head th:not(:first-child):not(:last-child){
+  box-shadow:
+    inset -1px 0 0 rgba(255,255,255,.12),
+    inset 1px 0 0 rgba(0,0,0,.08);
+}
+
+thead tr.sub-head th{
+  box-shadow:
+    inset -1px 0 0 rgba(0,0,0,.06),
+    inset 1px 0 0 rgba(255,255,255,.18);
+}
+
+tbody td:not(.apt-cell):not(:last-child){
+  box-shadow:
+    inset -1px 0 0 rgba(0,0,0,.03),
+    inset 1px 0 0 rgba(255,255,255,.24);
 }
 
 /* Sticky lägenhetskolumn */
@@ -307,16 +347,12 @@ tbody tr:nth-child(even) td{
   width:var(--sticky-left-width);
   min-width:var(--sticky-left-width);
   max-width:var(--sticky-left-width);
-  box-shadow:2px 0 0 var(--line);
+  box-shadow:
+    2px 0 0 var(--line-strong),
+    inset 0 -1px 0 rgba(0,0,0,.03);
 }
 
 /* Noteringskolumn */
-#protocolTable thead th:last-child{
-  width:var(--note-col-width);
-  min-width:var(--note-col-width);
-  max-width:var(--note-col-width);
-}
-
 #protocolTable tbody td:last-child{
   width:var(--note-col-width);
   min-width:var(--note-col-width);
@@ -325,7 +361,7 @@ tbody tr:nth-child(even) td{
 
 /* Aktiv rad */
 tbody tr:focus-within td{
-  background:#fff8ef;
+  background:var(--row-focus);
 }
 
 tbody tr:focus-within .apt-cell{
@@ -518,8 +554,8 @@ tbody tr:focus-within .apt-cell{
   }
 
   :root{
-    --sticky-left-width:68px;
-    --note-col-width:52px;
+    --sticky-left-width:60px;
+    --note-col-width:48px;
     --head-row-1-height:30px;
     --head-row-2-height:26px;
   }
